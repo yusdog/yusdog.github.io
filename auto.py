@@ -13,22 +13,22 @@ TEMPLATE_HTML = """<!DOCTYPE html>
     <link rel="apple-touch-icon" href="/images/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Play {GAME_NAME} | GN-Math Unblocked Games</title>
-    <meta name="description" content="Play {GAME_NAME} unblocked on GN-Math - No downloads required! Enjoy this fun HTML5 game at school or work with our fast, secure gaming platform.">
+    <title>Play {GAME_NAME} | yusdog Unblocked Games</title>
+    <meta name="description" content="Play {GAME_NAME} unblocked on yusdog - No downloads required! Enjoy this fun HTML5 game at school or work with our fast, secure gaming platform.">
     <meta name="keywords" content="{GAME_NAME}, {GAME_NAME} unblocked, play {GAME_NAME}, free {GAME_NAME}, html5 games, unblocked games, school games, no flash games">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://genizymath.github.io/">
-    <meta property="og:title" content="Play {GAME_NAME} | GN-Math Unblocked Games">
-    <meta property="og:description" content="Play {GAME_NAME} unblocked on GN-Math - No downloads required! Enjoy this fun HTML5 game at school or work.">
+    <meta property="og:url" content="https://yusdog.github.io/">
+    <meta property="og:title" content="Play {GAME_NAME} | yusdog Unblocked Games">
+    <meta property="og:description" content="Play {GAME_NAME} unblocked on yusdog - No downloads required! Enjoy this fun HTML5 game at school or work.">
     <meta property="og:image" content="{GAME_COVER}">
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://genizymath.github.io/">
-    <meta property="twitter:title" content="Play {GAME_NAME} | GN-Math Unblocked Games">
-    <meta property="twitter:description" content="Play {GAME_NAME} unblocked on GN-Math - No downloads required! Enjoy this fun HTML5 game at school or work.">
+    <meta property="twitter:url" content="https://yusdog.github.io/">
+    <meta property="twitter:title" content="Play {GAME_NAME} | yusdog Unblocked Games">
+    <meta property="twitter:description" content="Play {GAME_NAME} unblocked on yusdog - No downloads required! Enjoy this fun HTML5 game at school or work.">
     <meta property="twitter:image" content="{GAME_COVER}">
     
     <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-WX5VS54ZDW"></script>
@@ -164,7 +164,7 @@ TEMPLATE_HTML = """<!DOCTYPE html>
 <body class="dark-mode">
     <header>
         <div class="header-content">
-            <a class="logo" href="/index.html" style="text-decoration: none; color: inherit;">genizymath</a>
+            <a class="logo" href="/index.html" style="text-decoration: none; color: inherit;">yusdog</a>
             <div class="control-buttons">
                 <a href="https://yusdog.github.io/movies/" id="moviesTab" class="nav-tab">movies</a>
                 <button id="settings">Settings</button>
@@ -180,7 +180,7 @@ TEMPLATE_HTML = """<!DOCTYPE html>
         <div class="game-frame-container">
             <iframe class="game-frame" id="gameFrame" allowfullscreen></iframe>
             <button class="fullscreen-btn" onclick="document.getElementById('gameFrame').requestFullscreen()">Fullscreen</button>
-            <button class="newtab-btn" onclick="window.open('https://genizymath.github.io/iframe/{PATHNAME}', '_blank')">Open in New Tab</button>
+            <button class="newtab-btn" onclick="window.open('https://yusdog.github.io/iframe/{PATHNAME}', '_blank')">Open in New Tab</button>
         </div>
 
         <div class="game-info">
@@ -189,7 +189,7 @@ TEMPLATE_HTML = """<!DOCTYPE html>
             <div class="game-details">
                 <h2>About {GAME_NAME}</h2>
                 <p class="game-description">
-                    Play {GAME_NAME} unblocked on GN-Math! Our platform provides fast, secure access to this popular HTML5 game without any downloads. 
+                    Play {GAME_NAME} unblocked on yusdog! Our platform provides fast, secure access to this popular HTML5 game without any downloads. 
                     Perfect for school, work, or home, {GAME_NAME} runs directly in your browser with no installation required.
                 </p>
                 
@@ -258,7 +258,7 @@ sitemap = """<?xml version="1.0" encoding="UTF-8"?>
   xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
   <url>
-    <loc>https://genizymath.github.io/</loc>
+    <loc>https://yusdog.github.io/</loc>
   </url>
 """;
 
@@ -305,7 +305,7 @@ async def process_game(session: ClientSession, game: dict, OUTPUT_DIR: str, GAME
     global sitemap
     sitemap += f"""
     <url>
-        <loc>https://genizymath.github.io/games/{game_name_url}/</loc>
+        <loc>https://yusdog.github.io/games/{game_name_url}/</loc>
     </url>
     """
     print(f"Made {index_path}")
