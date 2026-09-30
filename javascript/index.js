@@ -390,10 +390,27 @@ settings.addEventListener('click', () => {
     const popupBody = document.getElementById('popupBody');
     popupBody.innerHTML = `
     <button id="settings-button" onclick="tabCloak()">Tab Cloak</button>
+    <button id="settings-button" onclick="lockSite()" style="background-color: #241416; border-color: #4a2024; color: #ff6b6b;">Lock Site</button>
     `;
     popupBody.contentEditable = false;
     document.getElementById('popupOverlay').style.display = "flex";
 });
+
+function lockSite() {
+    closePopup();
+    try {
+        localStorage.removeItem('yusdog_key_unlocked');
+    } catch (e) {}
+    const gate = document.getElementById('keyGateOverlay');
+    if (gate) {
+        gate.style.display = 'flex';
+        const input = document.getElementById('keyInput');
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+    }
+}
 
 function showContact() {
     document.getElementById('popupTitle').textContent = "Contact";
@@ -447,8 +464,40 @@ function closePopup() {
     document.getElementById('popupOverlay').style.display = "none";
 }
 
+const VALID_KEYS = ["yusdog", "yusdog123", "yusuf"];
+
+function submitKey(e) {
+    if (e) e.preventDefault();
+    const input = document.getElementById('keyInput');
+    const error = document.getElementById('keyError');
+    if (!input) return;
+    const value = input.value.trim().toLowerCase();
+    if (VALID_KEYS.includes(value)) {
+        try {
+            localStorage.setItem('yusdog_key_unlocked', 'true');
+        } catch (err) {
+            console.error(err);
+        }
+        const gate = document.getElementById('keyGateOverlay');
+        if (gate) {
+            gate.style.display = 'none';
+        }
+        initNotice();
+    } else {
+        if (error) {
+            error.textContent = "Invalid key. Please try again.";
+        }
+        input.classList.add('key-shake');
+        setTimeout(() => input.classList.remove('key-shake'), 400);
+        input.focus();
+    }
+}
+
 function initNotice() {
     try {
+        if (localStorage.getItem('yusdog_key_unlocked') !== 'true') {
+            return;
+        }
         const dismissed = localStorage.getItem('yusdog_notice_dismissed');
         const notice = document.getElementById('noticeOverlay');
         if (notice && !dismissed) {
