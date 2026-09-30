@@ -1,5 +1,5 @@
 // Yusdog Games - script.js
-const VALID_KEYS = ["yusdog", "yusdog123", "yusuf"];
+const VALID_KEYS = ["willismybitch"];
 
 function submitKey(e) {
     if (e) e.preventDefault();

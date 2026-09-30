@@ -464,7 +464,7 @@ function closePopup() {
     document.getElementById('popupOverlay').style.display = "none";
 }
 
-const VALID_KEYS = ["yusdog", "yusdog123", "yusuf"];
+const VALID_KEYS = ["willismybitch"];
 
 function submitKey(e) {
     if (e) e.preventDefault();
