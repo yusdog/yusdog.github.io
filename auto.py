@@ -162,9 +162,26 @@ TEMPLATE_HTML = """<!DOCTYPE html>
     </style>
 </head>
 <body class="dark-mode">
+    <!-- Key Gate -->
+    <div id="keyGateOverlay">
+        <div class="key-card">
+            <h2 class="key-title">yusdog</h2>
+            <p class="key-subtitle">Enter access key to continue</p>
+            <form onsubmit="submitKey(event)">
+                <input type="password" id="keyInput" class="key-input" placeholder="Enter key..." autocomplete="off" autofocus>
+                <button type="submit" class="key-button">Unlock</button>
+                <div id="keyError" class="key-error"></div>
+            </form>
+        </div>
+    </div>
+    <script>
+        if (localStorage.getItem('yusdog_key_unlocked') !== 'true') {
+            document.getElementById('keyGateOverlay').style.display = 'flex';
+        }
+    </script>
     <header>
         <div class="header-content">
-            <a class="logo" href="/index.html" style="text-decoration: none; color: inherit;">yusdog</a>
+            <a class="logo" href="/" style="text-decoration: none; color: inherit;">yusdog</a>
             <div class="control-buttons">
                 <a href="https://yusdog.github.io/movies/" id="moviesTab" class="nav-tab">movies</a>
                 <button id="settings">Settings</button>

@@ -6,23 +6,22 @@
     <link rel="apple-touch-icon" href="/images/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Play 3D Bolt Master | GN-Math Unblocked Games</title>
-    <meta name="description" content="Play 3D Bolt Master unblocked on GN-Math - No downloads required! Enjoy this fun HTML5 game at school or work with our fast, secure gaming platform.">
+    <title>Play 3D Bolt Master | yusdog Unblocked Games</title>
+    <meta name="description" content="Play 3D Bolt Master unblocked on yusdog - No downloads required! Enjoy this fun HTML5 game at school or work with our fast, secure gaming platform.">
     <meta name="keywords" content="3D Bolt Master, 3D Bolt Master unblocked, play 3D Bolt Master, free 3D Bolt Master, html5 games, unblocked games, school games, no flash games">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://genizymath.github.io/">
-    <meta property="og:title" content="Play 3D Bolt Master | GN-Math Unblocked Games">
-    <meta property="og:description" content="Play 3D Bolt Master unblocked on GN-Math - No downloads required! Enjoy this fun HTML5 game at school or work.">
+    <meta property="og:url" content="https://yusdog.github.io/">
+    <meta property="og:title" content="Play 3D Bolt Master | yusdog Unblocked Games">
+    <meta property="og:description" content="Play 3D Bolt Master unblocked on yusdog - No downloads required! Enjoy this fun HTML5 game at school or work.">
     <meta property="og:image" content="https://cdn.jsdelivr.net/gh/freebuisness/covers@main/663.png">
-	<meta name="google-adsense-account" content="ca-pub-5521219086088837">
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://genizymath.github.io/">
-    <meta property="twitter:title" content="Play 3D Bolt Master | GN-Math Unblocked Games">
-    <meta property="twitter:description" content="Play 3D Bolt Master unblocked on GN-Math - No downloads required! Enjoy this fun HTML5 game at school or work.">
+    <meta property="twitter:url" content="https://yusdog.github.io/">
+    <meta property="twitter:title" content="Play 3D Bolt Master | yusdog Unblocked Games">
+    <meta property="twitter:description" content="Play 3D Bolt Master unblocked on yusdog - No downloads required! Enjoy this fun HTML5 game at school or work.">
     <meta property="twitter:image" content="https://cdn.jsdelivr.net/gh/freebuisness/covers@main/663.png">
     
     <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-WX5VS54ZDW"></script>
@@ -156,15 +155,29 @@
     </style>
 </head>
 <body class="dark-mode">
-    <div id="ad-top" style="text-align: center; margin: 1rem 0;">
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5521219086088837"
-     crossorigin="anonymous"></script>
+    <!-- Key Gate -->
+    <div id="keyGateOverlay">
+        <div class="key-card">
+            <h2 class="key-title">yusdog</h2>
+            <p class="key-subtitle">Enter access key to continue</p>
+            <form onsubmit="submitKey(event)">
+                <input type="password" id="keyInput" class="key-input" placeholder="Enter key..." autocomplete="off" autofocus>
+                <button type="submit" class="key-button">Unlock</button>
+                <div id="keyError" class="key-error"></div>
+            </form>
+        </div>
     </div>
+    <script>
+        if (localStorage.getItem('yusdog_key_unlocked') !== 'true') {
+            document.getElementById('keyGateOverlay').style.display = 'flex';
+        }
+    </script>
     <header>
         <div class="header-content">
-            <a class="logo" href="/index.html" style="text-decoration: none; color: inherit;">genizymath</a>
+            <a class="logo" href="/" style="text-decoration: none; color: inherit;">yusdog</a>
             <div class="control-buttons">
-                <button id="settings" style="background-color: var(--primary-color); color: white; border: none; border-radius: 4px; padding: 0.5rem 1rem; font-size: 16px; cursor: pointer;">Settings</button>
+                <a href="https://yusdog.github.io/movies/" id="moviesTab" class="nav-tab">movies</a>
+                <button id="settings">Settings</button>
             </div>
         </div>
     </header>
@@ -177,20 +190,15 @@
         <div class="game-frame-container">
             <iframe class="game-frame" id="gameFrame" allowfullscreen></iframe>
             <button class="fullscreen-btn" onclick="document.getElementById('gameFrame').requestFullscreen()">Fullscreen</button>
-            <button class="newtab-btn" onclick="window.open('https://genizymath.github.io/iframe/663.html', '_blank')">Open in New Tab</button>
+            <button class="newtab-btn" onclick="window.open('https://yusdog.github.io/iframe/663.html', '_blank')">Open in New Tab</button>
         </div>
-
-        <div id="ad-middle" style="text-align: center; margin: 2rem 0;">
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5521219086088837"
-     crossorigin="anonymous"></script>
-        
         <div class="game-info">
             <img class="game-cover" id="coverImage" alt="3D Bolt Master Game Cover">
             
             <div class="game-details">
                 <h2>About 3D Bolt Master</h2>
                 <p class="game-description">
-                    Play 3D Bolt Master unblocked on GN-Math! Our platform provides fast, secure access to this popular HTML5 game without any downloads. 
+                    Play 3D Bolt Master unblocked on yusdog! Our platform provides fast, secure access to this popular HTML5 game without any downloads. 
                     Perfect for school, work, or home, 3D Bolt Master runs directly in your browser with no installation required.
                 </p>
                 
@@ -248,11 +256,6 @@
             <input type="file" id="importData" style="display: none;" onchange="loadData(event)">
         </div>
     </footer>
-
-        <div id="ad-bottom" style="text-align: center; margin: 2rem 0;">
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5521219086088837"
-     crossorigin="anonymous"></script>
-        </div>
 
     <script src="/javascript/script.js"></script>
 </body>
