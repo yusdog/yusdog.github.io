@@ -101,6 +101,53 @@
             color: #ffffff;
         }
 
+        /* Season Dropdown Styles */
+        details.season-dropdown {
+            background-color: #121214;
+            border: 1px solid #222222;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+        details.season-dropdown[open] {
+            border-color: #383838;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+        }
+        details.season-dropdown summary {
+            font-size: 1.15rem;
+            font-weight: 700;
+            padding: 16px 20px;
+            cursor: pointer;
+            color: #ffffff;
+            user-select: none;
+            outline: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background-color 0.2s ease;
+        }
+        details.season-dropdown summary:hover {
+            background-color: #18181b;
+        }
+        details.season-dropdown summary::-webkit-details-marker {
+            display: none;
+        }
+        details.season-dropdown summary::after {
+            content: "▼";
+            font-size: 0.8rem;
+            color: #a1a1aa;
+            transition: transform 0.2s ease;
+        }
+        details.season-dropdown[open] summary::after {
+            transform: rotate(180deg);
+        }
+        details.season-dropdown ul {
+            padding: 0 16px 16px 16px;
+            margin: 0;
+            gap: 10px;
+        }
+
         /* Key Gate Styles */
         #keyGateOverlay {
             position: fixed;
@@ -273,11 +320,34 @@
         <p class="intro">ask for movies too ill add it</p>
 
         <h2>South Park:</h2>
-        <ul>
-            <li><a href="https://drive.google.com/file/d/1OMm778NcmtWCw-g5gT35Dh9CVX1Ecbjm/view?usp=drive_link" target="_blank">Scott Tenorman Must Die | S5 E4</a></li>
-            <li><a href="https://drive.google.com/file/d/1ULY8xICqSXNYdWhuiHys45m7JmgLDDLB/view?usp=sharing" target="_blank">Terrance and Phillip: Behind the Blow | S5 E5</a></li>
-            <li><a href="https://drive.google.com/file/d/1MgJlN_-45OYsoMUcJvshATUS4GGTz73X/view?usp=sharing" target="_blank">Cartmanland | S5 E6</a></li>
-        </ul>
+        <details class="season-dropdown">
+            <summary>Season 1</summary>
+            <ul>
+                <li><a href="https://drive.google.com/file/d/1mtIi4uhvqa0FLl0iA14sNo1PcNVCnOAg/view?usp=sharing" target="_blank">Cartman Gets an Anal Probe | S1 E1</a></li>
+                <li><a href="https://drive.google.com/file/d/1Xor9FtCYpMijBu6AuDghd1lGJZu3ZTyv/view?usp=sharing" target="_blank">Weight Gain 4000 | S1 E2</a></li>
+                <li><a href="https://drive.google.com/file/d/1IIJEaWAtA6nDMRMD48T0p6y03wuBhMnr/view?usp=sharing" target="_blank">Volcano | S1 E3</a></li>
+                <li><a href="https://drive.google.com/file/d/1CxEyYdEcMTSapAcL0w8j11WiqSISy8e0/view?usp=sharing" target="_blank">Big Gay Al's Big Gay Boat Ride | S1 E4</a></li>
+                <li><a href="https://drive.google.com/file/d/1cuxgtxJ_bXzgLBxWouNKuRbeI983s7UM/view?usp=sharing" target="_blank">An Elephant Makes Love to a Pig | S1 E5</a></li>
+                <li><a href="https://drive.google.com/file/d/15x7rQXDXZQYpApTjXel63NaPIooeag7N/view?usp=sharing" target="_blank">Death | S1 E6</a></li>
+                <li><a href="https://drive.google.com/file/d/18-BRsQlc7HGwSQF-6o1RHLOApOYWu-4I/view?usp=sharing" target="_blank">Pinkeye | S1 E7</a></li>
+                <li><a href="https://drive.google.com/file/d/1yMMtvKgIDZmaopW1RLN0blwSFwDF8Gwn/view?usp=sharing" target="_blank">Starvin' Marvin | S1 E8</a></li>
+                <li><a href="https://drive.google.com/file/d/1yJ1Ar7JVviHYMv4erAODOpehpCI7vQPb/view?usp=sharing" target="_blank">Mr. Hankey, the Christmas Poo | S1 E9</a></li>
+                <li><a href="https://drive.google.com/file/d/12WIHIACrN8f1bNcVmmMghs-VMWl4LcoN/view?usp=sharing" target="_blank">Damien | S1 E10</a></li>
+                <li><a href="https://drive.google.com/file/d/1NVXXRFJ4xuA1gEKZEk2_FtOAZWN1vNWo/view?usp=sharing" target="_blank">Tom's Rhinoplasty | S1 E11</a></li>
+                <li><a href="https://drive.google.com/file/d/1ko4NbTLElzFQtosut7vtsTxKTquTU1o2/view?usp=sharing" target="_blank">Mecha-Streisand | S1 E12</a></li>
+                <li><a href="https://drive.google.com/file/d/1fYXSwmpr2uGld1xsqoKGdElv0ff33IvT/view?usp=sharing" target="_blank">Cartman's Mom is a Dirty Slut | S1 E13</a></li>
+                <li><a href="https://drive.google.com/file/d/11yYioFiMIGX_t8iWV8Je-6RfeaalM_FK/view?usp=sharing" target="_blank">Jay Leno's Appearance on South Park | Special</a></li>
+                <li><a href="https://drive.google.com/file/d/1mSHDl9szNHbqtJ8n755nhdbFHih9UPbA/view?usp=sharing" target="_blank">O Holy Night - Cartman Music Video | Special</a></li>
+            </ul>
+        </details>
+        <details class="season-dropdown">
+            <summary>Season 5</summary>
+            <ul>
+                <li><a href="https://drive.google.com/file/d/1OMm778NcmtWCw-g5gT35Dh9CVX1Ecbjm/view?usp=drive_link" target="_blank">Scott Tenorman Must Die | S5 E4</a></li>
+                <li><a href="https://drive.google.com/file/d/1ULY8xICqSXNYdWhuiHys45m7JmgLDDLB/view?usp=sharing" target="_blank">Terrance and Phillip: Behind the Blow | S5 E5</a></li>
+                <li><a href="https://drive.google.com/file/d/1MgJlN_-45OYsoMUcJvshATUS4GGTz73X/view?usp=sharing" target="_blank">Cartmanland | S5 E6</a></li>
+            </ul>
+        </details>
 
         <h2>Rick and Morty:</h2>
         <ul>
