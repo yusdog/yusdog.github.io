@@ -1646,10 +1646,6 @@
                     }
                 }
                 appendSystemNotice(`⛔ [ADMIN BAN]: User @${modEvent.targetUser} was permanently banned by Admin @${modEvent.admin}. Reason: ${modEvent.reason}`);
-            } else if (modEvent.action === 'bandevice') {
-                if (!amIAdmin && window.YusdogSecurity && modEvent.targetDevice === window.YusdogSecurity.DEVICE_ID) {
-                    await window.YusdogSecurity.banCurrentDevice(modEvent.reason || 'Hardware device banned by administrator');
-                }
             } else if (modEvent.action === 'kick') {
                 if (currentUser && modEvent.targetUser && modEvent.targetUser.toLowerCase() === currentUser.toLowerCase()) {
                     alert(`You were kicked by Administrator @${modEvent.admin}.`);
@@ -2532,7 +2528,7 @@
             }
 
             // Admin Moderation Commands
-            if (['/warn', '/ban', '/bandevice', '/kick', '/announce', '/unban'].includes(cmd)) {
+            if (['/warn', '/ban', '/kick', '/announce', '/unban'].includes(cmd)) {
                 if (!isDeviceAdmin()) {
                     appendSystemNotice(`❌ Permission Denied: Admin authorization required. This command is restricted to designated administrator devices.`);
                     return true;
@@ -2548,7 +2544,7 @@
             const amIAdmin = isDeviceAdmin();
             let helpText = `Available Chat Commands:\n• /vc - Join or open Voice Chat Room 🎙️\n• /dm <username> - Start a private Direct Message\n• /clear - Clear messages from current view\n• /help - Display this commands guide`;
             if (amIAdmin) {
-                helpText += `\n\nAdministrator Commands (Authorized on this device 🛡️):\n• /warn <username> <reason> - Issue an official platform warning\n• /ban <username> [reason] - Permanently ban target's physical device\n• /bandevice <device_id> [reason] - Ban specific hardware device ID\n• /kick <username> - Disconnect user session\n• /announce <message> - Broadcast global announcement banner`;
+                helpText += `\n\nAdministrator Commands (Authorized on this device 🛡️):\n• /warn <username> <reason> - Issue an official platform warning\n• /ban <username> [reason] - Permanently ban target's physical device\n• /kick <username> - Disconnect user session\n• /announce <message> - Broadcast global announcement banner`;
             }
             appendSystemNotice(helpText);
         }
@@ -2574,15 +2570,6 @@
                     return;
                 }
                 const payload = { action: 'ban', targetUser: target, reason, admin: currentUser, timestamp: Date.now() };
-                fetch(`${NTFY_BASE}/${topic}`, { method: 'POST', body: JSON.stringify(payload) });
-            } else if (action === 'bandevice') {
-                const targetDev = args[0];
-                const reason = args.slice(1).join(' ') || 'Administrator hardware ban';
-                if (!targetDev) {
-                    alert('Usage: /bandevice <deviceId> [reason]');
-                    return;
-                }
-                const payload = { action: 'bandevice', targetDevice: targetDev, reason, admin: currentUser, timestamp: Date.now() };
                 fetch(`${NTFY_BASE}/${topic}`, { method: 'POST', body: JSON.stringify(payload) });
             } else if (action === 'kick') {
                 const target = args[0];
