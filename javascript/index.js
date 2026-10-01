@@ -120,9 +120,10 @@ function displayFeaturedZones(featuredZones) {
         zoneItem.className = "zone-item";
         zoneItem.href = url;
         zoneItem.target = "_blank";
-        zoneItem.rel = "noopener";
+        zoneItem.rel = "noopener noreferrer";
 
         zoneItem.onclick = (event) => {
+            if (event.ctrlKey || event.metaKey || event.button === 1) return;
             event.preventDefault();
             openZone(file);
         };
@@ -138,6 +139,7 @@ function displayFeaturedZones(featuredZones) {
         button.textContent = file.name;
         button.onclick = (event) => {
             event.stopPropagation();
+            event.preventDefault();
             openZone(file);
         };
         zoneItem.appendChild(button);
@@ -179,9 +181,10 @@ function displayZones(zones) {
         zoneItem.className = "zone-item";
         zoneItem.href = url;
         zoneItem.target = "_blank";
-        zoneItem.rel = "noopener";
+        zoneItem.rel = "noopener noreferrer";
 
         zoneItem.onclick = (event) => {
+            if (event.ctrlKey || event.metaKey || event.button === 1) return;
             event.preventDefault();
             openZone(file);
         };
@@ -197,6 +200,7 @@ function displayZones(zones) {
         button.textContent = file.name;
         button.onclick = (event) => {
             event.stopPropagation();
+            event.preventDefault();
             openZone(file);
         };
         zoneItem.appendChild(button);
@@ -232,11 +236,7 @@ function displayZones(zones) {
 
 function openZone(file) {
     const url = getZoneURL(file);
-    if (file.url && file.url.startsWith("http")) {
-        window.open(url, "_blank");
-    } else {
-        window.location.href = url;
-    }
+    window.open(url, "_blank");
 }
 
 function getZoneURL(file) {
