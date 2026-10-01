@@ -229,7 +229,7 @@
                         DEVICE PERMANENTLY BANNED
                     </h1>
                     <p style="color: #d1d1d6; font-size: 15px; line-height: 1.6; margin: 0 0 20px 0;">
-                        This physical device has been permanently restricted from accessing the <strong>Yusdog</strong> platform (Games, Movies, and Chat) due to a serious terms violation.
+                        This physical device has been permanently restricted from accessing the <strong>Yusdog</strong> platform (Games and Movies) due to a serious terms violation.
                     </p>
                     ${reason ? `<div style="background: #200d0e; border: 1px solid #5a1e22; border-radius: 8px; padding: 12px; margin-bottom: 20px; color: #ff8585; font-size: 13px; font-weight: 600;">Violation: ${reason}</div>` : ''}
                     <div style="background: #09090b; border: 1px solid #222225; border-radius: 10px; padding: 14px; text-align: left; font-size: 12px; color: #8e8e93; margin-bottom: 22px; font-family: monospace;">
