@@ -628,6 +628,15 @@
             align-items: center;
             justify-content: space-between;
             animation: fadeInMsg 0.15s ease-out;
+            position: relative;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .upload-file-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
         }
         .upload-file-info {
             display: flex;
@@ -636,6 +645,14 @@
         }
         .upload-icon {
             font-size: 20px;
+        }
+        .upload-thumb-preview {
+            width: 38px;
+            height: 38px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #33333d;
+            display: none;
         }
         .upload-file-name {
             font-size: 13px;
@@ -651,10 +668,30 @@
             font-size: 11px;
             color: #8e8e93;
         }
+        .upload-status-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
         .upload-progress-text {
             font-size: 12px;
             color: #a1a1aa;
             font-style: italic;
+        }
+        .upload-progress-track {
+            width: 100%;
+            height: 4px;
+            background: #202028;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        .upload-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            border-radius: 2px;
+            transition: width 0.2s ease;
         }
         .upload-cancel-btn {
             background: none;
@@ -668,32 +705,60 @@
         .upload-cancel-btn:hover {
             color: #ff453a;
         }
+
+        /* Ultra-Smooth Media Cards & Shimmer Skeletons */
         .msg-media-box {
             margin-top: 8px;
-            border-radius: 10px;
+            border-radius: 12px;
             overflow: hidden;
-            max-width: 440px;
+            max-width: 480px;
+            position: relative;
+            background: #141418;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .msg-media-box:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+        }
+        .msg-media-box.loading-skeleton {
+            min-height: 180px;
+            background: linear-gradient(90deg, #131317 25%, #20202a 50%, #131317 75%);
+            background-size: 200% 100%;
+            animation: shimmerSkeleton 1.4s infinite linear;
+        }
+        @keyframes shimmerSkeleton {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
         .chat-img-thumb {
             max-width: 100%;
-            max-height: 320px;
-            border-radius: 8px;
+            max-height: 380px;
+            width: auto;
+            height: auto;
+            border-radius: 11px;
             display: block;
-            cursor: pointer;
-            transition: transform 0.15s ease;
-            border: 1px solid #28282e;
+            cursor: zoom-in;
+            object-fit: contain;
+            image-rendering: -webkit-optimize-contrast;
+            opacity: 0;
+            transform: scale(0.985);
+            transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .chat-img-thumb.loaded {
+            opacity: 1;
+            transform: scale(1);
         }
         .chat-img-thumb:hover {
             transform: scale(1.015);
-            border-color: #555560;
         }
         .chat-video-player {
             max-width: 100%;
-            max-height: 320px;
-            border-radius: 8px;
+            max-height: 340px;
+            border-radius: 11px;
             display: block;
             background: #000000;
-            border: 1px solid #28282e;
         }
         .chat-audio-player {
             max-width: 100%;
@@ -702,40 +767,92 @@
             margin-top: 4px;
         }
 
-        /* Lightbox */
+        /* Lightbox Fullscreen & Controls */
         .lightbox-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(0, 0, 0, 0.92);
-            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.94);
+            backdrop-filter: blur(14px);
             z-index: 1000000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            box-sizing: border-box;
+            animation: fadeInMsg 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .lightbox-toolbar {
+            position: absolute;
+            top: 18px;
+            right: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000005;
+        }
+        .lightbox-btn {
+            background: #18181e;
+            color: #d4d4d8;
+            border: 1px solid #2e2e38;
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+        .lightbox-btn:hover {
+            background: #252530;
+            color: #ffffff;
+            border-color: #4a4a58;
+        }
+        .lightbox-close-btn {
+            background: #201214;
+            color: #ff6b6b;
+            border: 1px solid #4a1d22;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
-            box-sizing: border-box;
+            transition: all 0.15s ease;
+        }
+        .lightbox-close-btn:hover {
+            background: #ff3b30;
+            color: #ffffff;
+        }
+        .lightbox-content-wrapper {
+            max-width: 90vw;
+            max-height: 85vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: auto;
         }
         .lightbox-img {
             max-width: 90vw;
-            max-height: 90vh;
-            border-radius: 8px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+            max-height: 85vh;
+            border-radius: 10px;
+            box-shadow: 0 16px 50px rgba(0, 0, 0, 0.9);
+            cursor: zoom-in;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .lightbox-close {
-            position: absolute;
-            top: 20px;
-            right: 24px;
-            background: #1c1c20;
-            color: #ffffff;
-            border: 1px solid #323238;
-            border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            font-size: 18px;
-            cursor: pointer;
+        .lightbox-img.zoomed {
+            max-width: none;
+            max-height: none;
+            cursor: zoom-out;
+            transform: scale(1.6);
         }
 
         /* Voice Chat Floating Panel */
@@ -1171,15 +1288,23 @@
             <!-- Message Input Bar -->
             <div class="chat-input-bar">
                 <div id="uploadPreviewBar" class="upload-preview-bar" style="display: none;">
-                    <div class="upload-file-info">
-                        <span id="uploadIcon" class="upload-icon">📎</span>
-                        <div class="upload-details">
-                            <span id="uploadFileName" class="upload-file-name">file.png</span>
-                            <span id="uploadFileSize" class="upload-file-size">0 KB</span>
+                    <div class="upload-file-row">
+                        <div class="upload-file-info">
+                            <span id="uploadIcon" class="upload-icon">📎</span>
+                            <img id="uploadThumbPreview" class="upload-thumb-preview" alt="Preview">
+                            <div class="upload-details">
+                                <span id="uploadFileName" class="upload-file-name">file.png</span>
+                                <span id="uploadFileSize" class="upload-file-size">0 KB</span>
+                            </div>
+                        </div>
+                        <div class="upload-status-group">
+                            <div id="uploadProgress" class="upload-progress-text">Ready</div>
+                            <button type="button" class="upload-cancel-btn" onclick="cancelPendingAttachment()" title="Cancel">✕</button>
                         </div>
                     </div>
-                    <div id="uploadProgress" class="upload-progress-text">Ready</div>
-                    <button type="button" class="upload-cancel-btn" onclick="cancelPendingAttachment()">✕</button>
+                    <div class="upload-progress-track">
+                        <div id="uploadProgressBar" class="upload-progress-fill"></div>
+                    </div>
                 </div>
                 <form class="input-form" onsubmit="handleSendMessage(event)">
                     <input type="file" id="mediaFileInput" accept="image/*,video/*,audio/*" style="display: none;" onchange="handleFileSelected(event)">
@@ -1261,10 +1386,17 @@
         </div>
     </div>
 
-    <!-- Image Lightbox Modal -->
+    <!-- Image Lightbox Modal with Actions -->
     <div id="imageLightboxModal" class="lightbox-overlay" style="display: none;" onclick="closeLightbox()">
-        <button type="button" class="lightbox-close" onclick="closeLightbox()">✕</button>
-        <img id="lightboxImg" class="lightbox-img" src="" alt="Full view" onclick="event.stopPropagation()">
+        <div class="lightbox-toolbar" onclick="event.stopPropagation()">
+            <a id="lightboxOpenOriginal" href="#" target="_blank" class="lightbox-btn" title="Open Original in New Tab">↗️ Open Original</a>
+            <a id="lightboxDownload" href="#" download="yusdog_media" class="lightbox-btn" title="Download Image">💾 Save</a>
+            <button type="button" class="lightbox-btn" onclick="toggleLightboxZoom()" title="Zoom In/Out">🔍 Zoom</button>
+            <button type="button" class="lightbox-close-btn" onclick="closeLightbox()" title="Close (Esc)">✕</button>
+        </div>
+        <div class="lightbox-content-wrapper" onclick="event.stopPropagation()">
+            <img id="lightboxImg" class="lightbox-img" src="" alt="Full view" onclick="toggleLightboxZoom()">
+        </div>
     </div>
 
     <script>
@@ -2086,12 +2218,115 @@
             });
         }
 
+        /* Client-Side Image Optimization */
+        function optimizeImage(file, maxDimension = 1440, quality = 0.85) {
+            return new Promise((resolve) => {
+                if (!file.type.startsWith('image/') || file.type.includes('gif') || file.type.includes('svg')) {
+                    return resolve(file); // Don't alter GIF animations or SVG
+                }
+                const img = new Image();
+                const url = URL.createObjectURL(file);
+                img.onload = () => {
+                    URL.revokeObjectURL(url);
+                    let { width, height } = img;
+                    if (width > maxDimension || height > maxDimension) {
+                        if (width > height) {
+                            height = Math.round((height * maxDimension) / width);
+                            width = maxDimension;
+                        } else {
+                            width = Math.round((width * maxDimension) / height);
+                            height = maxDimension;
+                        }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob((blob) => {
+                        if (blob && blob.size < file.size) {
+                            const newName = file.name.replace(/\.[^.]+$/, '') + '.webp';
+                            const optimizedFile = new File([blob], newName, { type: 'image/webp' });
+                            resolve(optimizedFile);
+                        } else {
+                            resolve(file);
+                        }
+                    }, 'image/webp', quality);
+                };
+                img.onerror = () => resolve(file);
+                img.src = url;
+            });
+        }
+
+        /* Multi-Host Upload Pipeline */
+        async function uploadToPreferredHosts(file, onProgress) {
+            // 1. Primary: NTFY.sh Native File Attachment Storage (Fastest, direct global CDN, zero redirects)
+            try {
+                onProgress(25, 'Uploading to CDN (Primary)...');
+                const res = await fetch('https://ntfy.sh/yd_chat_v2_files', {
+                    method: 'POST',
+                    headers: {
+                        'Filename': file.name
+                    },
+                    body: file
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.attachment && data.attachment.url) {
+                        onProgress(100, 'Ready ✓');
+                        return data.attachment.url;
+                    }
+                }
+            } catch (err) {
+                console.warn('Primary host error, trying alternative...', err);
+            }
+
+            // 2. Alternative: TmpFiles.org
+            try {
+                onProgress(50, 'Uploading to Alternative Host...');
+                const formData = new FormData();
+                formData.append('file', file);
+                const res = await fetch('https://tmpfiles.org/api/v1/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.status === 'success' && data.data && data.data.url) {
+                        onProgress(100, 'Ready ✓');
+                        return data.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+                    }
+                }
+            } catch (err) {
+                console.warn('Alternative host error, falling back...', err);
+            }
+
+            // 3. Fallback: Inline Base64 Data URL (for small images < 400KB)
+            if (file.size < 400 * 1024) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        onProgress(100, 'Ready (Inline) ✓');
+                        resolve(reader.result);
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            throw new Error('All image upload hosts failed.');
+        }
+
         async function uploadMediaFile(file) {
             const previewBar = document.getElementById('uploadPreviewBar');
             const fileNameEl = document.getElementById('uploadFileName');
             const fileSizeEl = document.getElementById('uploadFileSize');
             const progressEl = document.getElementById('uploadProgress');
+            const progressBar = document.getElementById('uploadProgressBar');
             const iconEl = document.getElementById('uploadIcon');
+            const thumbPreview = document.getElementById('uploadThumbPreview');
 
             if (file.size > 50 * 1024 * 1024) {
                 alert('File is too large. Maximum supported upload size is 50MB.');
@@ -2108,52 +2343,48 @@
                 icon = '🎵';
             }
 
-            if (iconEl) iconEl.textContent = icon;
+            // Instant local thumbnail preview
+            if (type === 'image') {
+                const localUrl = URL.createObjectURL(file);
+                if (thumbPreview) {
+                    thumbPreview.src = localUrl;
+                    thumbPreview.style.display = 'block';
+                }
+                if (iconEl) iconEl.style.display = 'none';
+            } else {
+                if (thumbPreview) thumbPreview.style.display = 'none';
+                if (iconEl) {
+                    iconEl.textContent = icon;
+                    iconEl.style.display = 'block';
+                }
+            }
+
             if (fileNameEl) fileNameEl.textContent = file.name;
             if (fileSizeEl) fileSizeEl.textContent = formatBytes(file.size);
-            if (progressEl) progressEl.textContent = 'Uploading...';
+            if (progressEl) progressEl.textContent = 'Optimizing...';
+            if (progressBar) progressBar.style.width = '15%';
             if (previewBar) previewBar.style.display = 'flex';
 
             try {
-                const formData = new FormData();
-                formData.append('file', file);
+                // Client-side optimize images for faster upload & smoother display
+                const uploadFile = (type === 'image') ? await optimizeImage(file) : file;
+                if (fileSizeEl) fileSizeEl.textContent = formatBytes(uploadFile.size);
 
-                const res = await fetch('https://tmpfiles.org/api/v1/upload', {
-                    method: 'POST',
-                    body: formData
+                const finalUrl = await uploadToPreferredHosts(uploadFile, (percent, label) => {
+                    if (progressBar) progressBar.style.width = percent + '%';
+                    if (progressEl) progressEl.textContent = label;
                 });
 
-                const data = await res.json();
-                if (data && data.status === 'success' && data.data && data.data.url) {
-                    const directUrl = data.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
-                    pendingAttachment = {
-                        url: directUrl,
-                        type: type,
-                        name: file.name,
-                        size: file.size
-                    };
-                    if (progressEl) progressEl.textContent = 'Ready ✓';
-                } else {
-                    throw new Error('Upload service returned non-success');
-                }
+                pendingAttachment = {
+                    url: finalUrl,
+                    type: type,
+                    name: file.name,
+                    size: uploadFile.size
+                };
             } catch (err) {
-                // If small image fallback to Data URL
-                if (file.type.startsWith('image/') && file.size < 300 * 1024) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        pendingAttachment = {
-                            url: e.target.result,
-                            type: 'image',
-                            name: file.name,
-                            size: file.size
-                        };
-                        if (progressEl) progressEl.textContent = 'Ready (local) ✓';
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    if (progressEl) progressEl.textContent = 'Upload failed ✕';
-                    setTimeout(cancelPendingAttachment, 2500);
-                }
+                if (progressEl) progressEl.textContent = 'Upload failed ✕';
+                if (progressBar) progressBar.style.background = '#ff453a';
+                setTimeout(cancelPendingAttachment, 2500);
             }
         }
 
@@ -2161,8 +2392,21 @@
             pendingAttachment = null;
             const bar = document.getElementById('uploadPreviewBar');
             const fileInput = document.getElementById('mediaFileInput');
+            const thumbPreview = document.getElementById('uploadThumbPreview');
+            const iconEl = document.getElementById('uploadIcon');
+            const progressBar = document.getElementById('uploadProgressBar');
+
             if (bar) bar.style.display = 'none';
             if (fileInput) fileInput.value = '';
+            if (thumbPreview) {
+                thumbPreview.src = '';
+                thumbPreview.style.display = 'none';
+            }
+            if (iconEl) iconEl.style.display = 'block';
+            if (progressBar) {
+                progressBar.style.width = '0%';
+                progressBar.style.background = 'linear-gradient(90deg, #3b82f6, #60a5fa)';
+            }
         }
 
         function formatBytes(bytes) {
@@ -2173,20 +2417,42 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
         }
 
-        /* Lightbox Image Preview */
+        /* Lightbox Image Preview & Actions */
         function openLightbox(url) {
             const modal = document.getElementById('imageLightboxModal');
             const img = document.getElementById('lightboxImg');
+            const openOrig = document.getElementById('lightboxOpenOriginal');
+            const dl = document.getElementById('lightboxDownload');
+
             if (modal && img) {
                 img.src = url;
+                img.classList.remove('zoomed');
+                if (openOrig) openOrig.href = url;
+                if (dl) dl.href = url;
                 modal.style.display = 'flex';
+            }
+        }
+
+        function toggleLightboxZoom() {
+            const img = document.getElementById('lightboxImg');
+            if (img) {
+                img.classList.toggle('zoomed');
             }
         }
 
         function closeLightbox() {
             const modal = document.getElementById('imageLightboxModal');
+            const img = document.getElementById('lightboxImg');
+            if (img) img.classList.remove('zoomed');
             if (modal) modal.style.display = 'none';
         }
+
+        // Close lightbox on Escape key
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeLightbox();
+            }
+        });
 
         /* User Profile & Moderation Popover */
         function openUserPopover(e, username) {
@@ -2372,7 +2638,13 @@
                 } else if (msg.attachment.type === 'audio') {
                     attachmentHtml = `<div class="msg-media-box"><audio src="${url}" class="chat-audio-player" controls></audio></div>`;
                 } else {
-                    attachmentHtml = `<div class="msg-media-box"><img src="${url}" class="chat-img-thumb" alt="Attachment" onclick="openLightbox('${url}')"></div>`;
+                    attachmentHtml = `
+                        <div class="msg-media-box loading-skeleton">
+                            <img src="${url}" class="chat-img-thumb" alt="Attachment" loading="lazy"
+                                 onload="this.classList.add('loaded'); this.parentElement.classList.remove('loading-skeleton');"
+                                 onerror="this.parentElement.classList.remove('loading-skeleton'); this.alt='Image failed to load';"
+                                 onclick="openLightbox('${url}')">
+                        </div>`;
                 }
             }
 
