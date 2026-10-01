@@ -240,15 +240,29 @@ function openZone(file) {
 }
 
 function getZoneURL(file) {
-    if (file.url && file.url.startsWith("http")) {
-        return file.url;
-    } else {
+    if (!file) return "#";
+    if (file.url) {
+        if (file.url.startsWith("http")) {
+            return file.url;
+        }
+        if (file.url.includes("{HTML_URL}/")) {
+            return file.url.replace("{HTML_URL}/", "/iframe/");
+        }
+        if (file.url.startsWith("iframe/")) {
+            return "/" + file.url;
+        }
+        if (file.url.startsWith("/iframe/")) {
+            return file.url;
+        }
+    }
+    if (file.name) {
         return "/games/" + file.name
             .replace(/ /g, '-')
             .toLowerCase()
             .replace(/[^a-z0-9-]/g, '')
             .replace(/-+/g, '-');
     }
+    return "#";
 }
 
 function filterZones() {
