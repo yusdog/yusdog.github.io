@@ -1701,11 +1701,19 @@
                         seenMessageIds.add(msg.id);
                         if (msg.isDm) {
                             const threadKey = getDmTopic(msg.user, msg.to);
+                            if (isMessageDeleted(msg.id)) return;
+                            const clearTime = parseInt(localStorage.getItem('yusdog_cleared_at_' + threadKey) || '0', 10);
+                            if (clearTime > 0 && getMessageTimestamp(msg) <= clearTime) return;
+
                             saveDmToStorage(threadKey, msg);
                             if (currentDmUser && (currentDmUser.toLowerCase() === msg.user.toLowerCase() || currentDmUser.toLowerCase() === msg.to.toLowerCase())) {
                                 appendMessage(msg, true);
                             }
                         } else if (msg.channel === currentChannel) {
+                            if (isMessageDeleted(msg.id)) return;
+                            const clearTime = parseInt(localStorage.getItem('yusdog_cleared_at_' + msg.channel) || '0', 10);
+                            if (clearTime > 0 && getMessageTimestamp(msg) <= clearTime) return;
+
                             if (currentChannel === 'announcements' && !isMsgFromAdmin(msg)) {
                                 return;
                             }
@@ -1831,11 +1839,19 @@
                             if (msgObj && msgObj.id && !seenMessageIds.has(msgObj.id)) {
                                 seenMessageIds.add(msgObj.id);
                                 if (msgObj.isDm) {
+                                    if (isMessageDeleted(msgObj.id)) return;
+                                    const clearTime = parseInt(localStorage.getItem('yusdog_cleared_at_' + topic) || '0', 10);
+                                    if (clearTime > 0 && getMessageTimestamp(msgObj) <= clearTime) return;
+
                                     saveDmToStorage(topic, msgObj);
                                     if (currentDmUser && (currentDmUser.toLowerCase() === msgObj.user.toLowerCase() || currentDmUser.toLowerCase() === msgObj.to.toLowerCase())) {
                                         appendMessage(msgObj, true);
                                     }
                                 } else {
+                                    if (isMessageDeleted(msgObj.id)) return;
+                                    const clearTime = parseInt(localStorage.getItem('yusdog_cleared_at_' + currentChannel) || '0', 10);
+                                    if (clearTime > 0 && getMessageTimestamp(msgObj) <= clearTime) return;
+
                                     if (currentChannel === 'announcements' || msgObj.channel === 'announcements') {
                                         if (!isMsgFromAdmin(msgObj)) {
                                             return;
@@ -1880,6 +1896,10 @@
                 const text = await res.text();
                 const lines = text.trim().split('\n');
                 let addedAny = false;
+
+                const clearKey = isDm ? topic : currentChannel;
+                const clearTime = parseInt(localStorage.getItem('yusdog_cleared_at_' + clearKey) || '0', 10);
+
                 for (const line of lines) {
                     if (!line.trim()) continue;
                     try {
@@ -1888,6 +1908,10 @@
                             const payload = JSON.parse(item.message);
                             if (payload && payload.id && !seenMessageIds.has(payload.id)) {
                                 seenMessageIds.add(payload.id);
+
+                                if (isMessageDeleted(payload.id)) continue;
+                                if (clearTime > 0 && getMessageTimestamp(payload) <= clearTime) continue;
+
                                 if (isDm) {
                                     saveDmToStorage(topic, payload);
                                     if (currentDmUser) {
@@ -1975,6 +1999,19 @@
                 }
             } else if (modEvent.action === 'announce') {
                 showAnnouncement(modEvent.message);
+            } else if (modEvent.action === 'clear_channel') {
+                const ch = modEvent.channel;
+                if (ch) {
+                    const clearTime = modEvent.timestamp || Date.now();
+                    const existingMsgs = getStoredMessages(ch);
+                    markMessageIdsDeleted(existingMsgs.map(m => m.id));
+                    localStorage.removeItem('yusdog_chat_' + ch);
+                    localStorage.setItem('yusdog_cleared_at_' + ch, clearTime);
+                    if (currentChannel === ch && !currentDmUser) {
+                        renderChannelMessages(ch);
+                        appendSystemNotice(`🧹 [ADMIN ACTION]: Channel #${ch} was wiped by Admin @${modEvent.admin || 'Admin'}.`);
+                    }
+                }
             }
         }
 
@@ -2744,10 +2781,48 @@
             return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
 
+        function getMessageTimestamp(msg) {
+            if (!msg) return 0;
+            if (typeof msg.timestamp === 'number') return msg.timestamp;
+            if (msg.id && typeof msg.id === 'string' && msg.id.startsWith('msg_')) {
+                const parts = msg.id.split('_');
+                const ts = parseInt(parts[1], 10);
+                if (!isNaN(ts)) return ts;
+            }
+            return 0;
+        }
+
+        function markMessageIdsDeleted(ids) {
+            if (!ids || !ids.length) return;
+            try {
+                let deleted = JSON.parse(localStorage.getItem('yusdog_deleted_msg_ids') || '[]');
+                ids.forEach(id => {
+                    if (id && !deleted.includes(id)) deleted.push(id);
+                });
+                if (deleted.length > 500) deleted = deleted.slice(-500);
+                localStorage.setItem('yusdog_deleted_msg_ids', JSON.stringify(deleted));
+            } catch(e) {}
+        }
+
+        function isMessageDeleted(msgId) {
+            if (!msgId) return false;
+            try {
+                const deleted = JSON.parse(localStorage.getItem('yusdog_deleted_msg_ids') || '[]');
+                return deleted.includes(msgId);
+            } catch(e) {
+                return false;
+            }
+        }
+
         function getStoredMessages(channel) {
             try {
                 const raw = localStorage.getItem('yusdog_chat_' + channel);
                 let msgs = raw ? JSON.parse(raw) : [];
+                const clearTime = parseInt(localStorage.getItem('yusdog_cleared_at_' + channel) || '0', 10);
+                if (clearTime > 0) {
+                    msgs = msgs.filter(m => getMessageTimestamp(m) > clearTime);
+                }
+                msgs = msgs.filter(m => !isMessageDeleted(m.id));
                 if (channel === 'announcements') {
                     msgs = msgs.filter(m => isMsgFromAdmin(m));
                 }
@@ -2771,7 +2846,12 @@
         function getStoredDmMessages(dmKey) {
             try {
                 const raw = localStorage.getItem('yusdog_dm_' + dmKey);
-                const msgs = raw ? JSON.parse(raw) : [];
+                let msgs = raw ? JSON.parse(raw) : [];
+                const clearTime = parseInt(localStorage.getItem('yusdog_cleared_at_' + dmKey) || '0', 10);
+                if (clearTime > 0) {
+                    msgs = msgs.filter(m => getMessageTimestamp(m) > clearTime);
+                }
+                msgs = msgs.filter(m => !isMessageDeleted(m.id));
                 msgs.forEach(m => { if (m && m.id) seenMessageIds.add(m.id); });
                 return msgs;
             } catch (e) {
@@ -3021,15 +3101,8 @@
                 return true;
             }
 
-            if (cmd === '/clear') {
-                if (currentDmUser) {
-                    const dmKey = getDmTopic(currentUser, currentDmUser);
-                    localStorage.removeItem('yusdog_dm_' + dmKey);
-                    renderDmMessages(dmKey);
-                } else {
-                    localStorage.removeItem('yusdog_chat_' + currentChannel);
-                    renderChannelMessages(currentChannel);
-                }
+            if (['/clear', '/clean', '/cls', '/purge'].includes(cmd)) {
+                handleClearCommand(cmd, args);
                 return true;
             }
 
@@ -3046,11 +3119,74 @@
             return false;
         }
 
+        function handleClearCommand(cmd, args) {
+            const isDm = Boolean(currentDmUser);
+            const activeKey = isDm ? getDmTopic(currentUser, currentDmUser) : (currentChannel || 'general');
+            const amIAdmin = isDeviceAdmin();
+
+            const firstArg = args[0] ? args[0].toLowerCase() : '';
+
+            // Global Purge by Admin: /clear all, /clear --all, or /purge
+            if ((firstArg === 'all' || firstArg === '--all' || cmd === '/purge') && !isDm) {
+                if (!amIAdmin) {
+                    appendSystemNotice('❌ Permission Denied: Clearing a channel for all members requires administrator authorization. Use /clear to clear your local view.');
+                    return;
+                }
+                executeAdminCommand('clear', [activeKey]);
+                return;
+            }
+
+            // Clear last N messages: e.g. /clear 10
+            const count = parseInt(firstArg, 10);
+            if (!isNaN(count) && count > 0) {
+                if (isDm) {
+                    let msgs = getStoredDmMessages(activeKey);
+                    const toDelete = msgs.slice(-count);
+                    markMessageIdsDeleted(toDelete.map(m => m.id));
+                    const newMsgs = msgs.slice(0, Math.max(0, msgs.length - count));
+                    try {
+                        localStorage.setItem('yusdog_dm_' + activeKey, JSON.stringify(newMsgs));
+                    } catch(e) {}
+                    renderDmMessages(activeKey);
+                    appendSystemNotice(`🧹 Cleared last ${Math.min(count, msgs.length)} messages from view.`);
+                } else {
+                    let msgs = getStoredMessages(activeKey);
+                    const toDelete = msgs.slice(-count);
+                    markMessageIdsDeleted(toDelete.map(m => m.id));
+                    const newMsgs = msgs.slice(0, Math.max(0, msgs.length - count));
+                    try {
+                        localStorage.setItem('yusdog_chat_' + activeKey, JSON.stringify(newMsgs));
+                    } catch(e) {}
+                    renderChannelMessages(activeKey);
+                    appendSystemNotice(`🧹 Cleared last ${Math.min(count, msgs.length)} messages from view.`);
+                }
+                return;
+            }
+
+            // Default: Wipe view (Channel or DM)
+            const clearTime = Date.now();
+            if (isDm) {
+                const msgs = getStoredDmMessages(activeKey);
+                markMessageIdsDeleted(msgs.map(m => m.id));
+                localStorage.removeItem('yusdog_dm_' + activeKey);
+                localStorage.setItem('yusdog_cleared_at_' + activeKey, clearTime);
+                renderDmMessages(activeKey);
+            } else {
+                const msgs = getStoredMessages(activeKey);
+                markMessageIdsDeleted(msgs.map(m => m.id));
+                localStorage.removeItem('yusdog_chat_' + activeKey);
+                localStorage.setItem('yusdog_cleared_at_' + activeKey, clearTime);
+                renderChannelMessages(activeKey);
+            }
+
+            appendSystemNotice('🧹 Chat view cleared successfully.');
+        }
+
         function showHelpMessage() {
             const amIAdmin = isDeviceAdmin();
-            let helpText = `Available Chat Commands:\n• /vc - Join or open Voice Chat Room 🎙️\n• /dm <username> - Start a private Direct Message\n• /clear - Clear messages from current view\n• /help - Display this commands guide`;
+            let helpText = `Available Chat Commands:\n• /vc - Join or open Voice Chat Room 🎙️\n• /dm <username> - Start a private Direct Message\n• /clear [number] - Clear messages from view (e.g. /clear or /clear 10)\n• /help - Display this commands guide`;
             if (amIAdmin) {
-                helpText += `\n\nAdministrator Commands (Authorized on this device 🛡️):\n• /warn <username> <reason> - Issue an official platform warning\n• /ban <username> [reason] - Permanently ban target's physical device\n• /kick <username> - Disconnect user session\n• /announce <message> - Broadcast global announcement banner`;
+                helpText += `\n\nAdministrator Commands (Authorized on this device 🛡️):\n• /clear all (or /purge) - Wipe current channel globally for all members\n• /warn <username> <reason> - Issue an official platform warning\n• /ban <username> [reason] - Permanently ban target's physical device\n• /kick <username> - Disconnect user session\n• /announce <message> - Broadcast global announcement banner`;
             }
             appendSystemNotice(helpText);
         }
@@ -3086,6 +3222,20 @@
                 const msg = args.join(' ');
                 if (!msg) return;
                 const payload = { action: 'announce', message: msg, admin: currentUser, timestamp: Date.now() };
+                fetch(`${NTFY_BASE}/${topic}`, { method: 'POST', body: JSON.stringify(payload) });
+            } else if (action === 'clear' || action === 'purge') {
+                const targetChannel = args[0] || currentChannel;
+                if (!targetChannel) return;
+                const clearTime = Date.now();
+                const existingMsgs = getStoredMessages(targetChannel);
+                markMessageIdsDeleted(existingMsgs.map(m => m.id));
+                localStorage.removeItem('yusdog_chat_' + targetChannel);
+                localStorage.setItem('yusdog_cleared_at_' + targetChannel, clearTime);
+                if (currentChannel === targetChannel && !currentDmUser) {
+                    renderChannelMessages(targetChannel);
+                    appendSystemNotice(`🧹 [ADMIN ACTION]: Channel #${targetChannel} cleared for all members.`);
+                }
+                const payload = { action: 'clear_channel', channel: targetChannel, admin: currentUser, timestamp: clearTime };
                 fetch(`${NTFY_BASE}/${topic}`, { method: 'POST', body: JSON.stringify(payload) });
             }
         }
