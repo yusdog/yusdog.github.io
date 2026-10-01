@@ -353,6 +353,70 @@
             background-color: #e4e4e7;
             transform: translateY(-1px);
         }
+        .chat-input:disabled {
+            background-color: #101014;
+            color: #71717a;
+            border-color: #202026;
+            cursor: not-allowed;
+            opacity: 0.75;
+        }
+        .chat-input:disabled::placeholder {
+            color: #71717a;
+            font-style: italic;
+        }
+        .send-btn:disabled, .send-btn.disabled {
+            background-color: #1a1a20 !important;
+            color: #52525b !important;
+            cursor: not-allowed !important;
+            transform: none !important;
+            border: 1px solid #282830 !important;
+        }
+        .attach-btn:disabled, .attach-btn.disabled {
+            opacity: 0.3 !important;
+            cursor: not-allowed !important;
+            pointer-events: none;
+        }
+        .channel-lock-badge {
+            margin-left: auto;
+            font-size: 11px;
+            opacity: 0.65;
+        }
+        .channel-status-pill {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .channel-status-pill.readonly {
+            background: rgba(234, 179, 8, 0.15);
+            color: #facc15;
+            border: 1px solid rgba(234, 179, 8, 0.3);
+        }
+        .channel-status-pill.admin-active {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        .announcement-readonly-bar {
+            background: rgba(234, 179, 8, 0.08);
+            border: 1px solid rgba(234, 179, 8, 0.22);
+            color: #fef08a;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .readonly-lock-icon {
+            font-size: 14px;
+        }
 
         /* Username Modal */
         #usernameModalOverlay {
@@ -1243,7 +1307,10 @@
             <ul class="channels-list">
                 <li class="channel-item active" data-channel="general" onclick="switchChannel('general')">💬 # general</li>
                 <li class="channel-item" data-channel="movie-chat" onclick="switchChannel('movie-chat')">🎬 # movie-chat</li>
-                <li class="channel-item" data-channel="announcements" onclick="switchChannel('announcements')">📢 # announcements</li>
+                <li class="channel-item" data-channel="announcements" onclick="switchChannel('announcements')">
+                    <span>📢 # announcements</span>
+                    <span class="channel-lock-badge" title="Only administrators can post">🔒</span>
+                </li>
             </ul>
 
             <!-- Voice Chat Room -->
@@ -1273,7 +1340,10 @@
         <main class="chat-main">
             <div class="chat-channel-bar">
                 <div class="channel-info">
-                    <h2 id="currentChannelTitle">💬 # general</h2>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <h2 id="currentChannelTitle" style="margin: 0;">💬 # general</h2>
+                        <span id="channelStatusPill" class="channel-status-pill" style="display: none;">🔒 Read-Only</span>
+                    </div>
                     <p id="currentChannelDesc">Main community discussion. Respect all members.</p>
                 </div>
                 <div class="online-pill">
@@ -1287,6 +1357,12 @@
 
             <!-- Message Input Bar -->
             <div class="chat-input-bar">
+                <!-- Read-Only Notice for Non-Admins in Announcements -->
+                <div id="announcementReadonlyNotice" class="announcement-readonly-bar" style="display: none;">
+                    <span class="readonly-lock-icon">🔒</span>
+                    <span><strong>Read-Only Channel:</strong> Only platform administrators can speak in # announcements.</span>
+                </div>
+
                 <div id="uploadPreviewBar" class="upload-preview-bar" style="display: none;">
                     <div class="upload-file-row">
                         <div class="upload-file-info">
@@ -1308,9 +1384,9 @@
                 </div>
                 <form class="input-form" onsubmit="handleSendMessage(event)">
                     <input type="file" id="mediaFileInput" accept="image/*,video/*,audio/*" style="display: none;" onchange="handleFileSelected(event)">
-                    <button type="button" class="attach-btn" onclick="document.getElementById('mediaFileInput').click()" title="Upload Image, Video, or Audio">📎</button>
+                    <button type="button" id="attachBtn" class="attach-btn" onclick="triggerFileUpload()" title="Upload Image, Video, or Audio">📎</button>
                     <input type="text" id="chatMessageInput" class="chat-input" placeholder="Type a message or /help, /vc, /dm..." autocomplete="off">
-                    <button type="submit" class="send-btn">Send</button>
+                    <button type="submit" id="sendMsgBtn" class="send-btn">Send</button>
                 </form>
             </div>
         </main>
@@ -1449,13 +1525,113 @@
             },
             'announcements': {
                 title: '📢 # announcements',
-                desc: 'Official platform news and updates.'
+                desc: 'Official platform news and updates (Admin posting only).'
             }
         };
 
         // Check Admin state
         function isDeviceAdmin() {
             return Boolean(window.YusdogSecurity && window.YusdogSecurity.isCurrentDeviceAdmin && window.YusdogSecurity.isCurrentDeviceAdmin());
+        }
+
+        // Verify if a message originates from an authorized administrator
+        function isMsgFromAdmin(msg) {
+            if (!msg) return false;
+            if (msg.isSystem) return true;
+            const adminDevices = (window.YusdogSecurity && window.YusdogSecurity.ADMIN_DEVICES) || ['yd_fp_e0a9e4a8', 'yd_fp_2d9b7922'];
+            if (msg.adminDevice && adminDevices.includes(msg.adminDevice)) return true;
+            if (msg.isAdmin) {
+                return !msg.adminDevice || adminDevices.includes(msg.adminDevice);
+            }
+            return false;
+        }
+
+        // Dynamic Permissions for Input Bar & Channels
+        function updateChatInputPermissions() {
+            const input = document.getElementById('chatMessageInput');
+            const sendBtn = document.getElementById('sendMsgBtn') || document.querySelector('.send-btn');
+            const attachBtn = document.getElementById('attachBtn');
+            const readonlyNotice = document.getElementById('announcementReadonlyNotice');
+            const statusPill = document.getElementById('channelStatusPill');
+
+            const amIAdmin = isDeviceAdmin();
+
+            if (currentChannel === 'announcements') {
+                if (statusPill) {
+                    statusPill.style.display = 'inline-block';
+                    if (amIAdmin) {
+                        statusPill.className = 'channel-status-pill admin-active';
+                        statusPill.textContent = '🛡️ Admin Posting';
+                    } else {
+                        statusPill.className = 'channel-status-pill readonly';
+                        statusPill.textContent = '🔒 Read-Only';
+                    }
+                }
+
+                if (amIAdmin) {
+                    if (input) {
+                        input.disabled = false;
+                        input.placeholder = "📢 Post an official announcement (Admin)...";
+                    }
+                    if (sendBtn) {
+                        sendBtn.disabled = false;
+                        sendBtn.classList.remove('disabled');
+                    }
+                    if (attachBtn) {
+                        attachBtn.disabled = false;
+                        attachBtn.classList.remove('disabled');
+                        attachBtn.title = "Upload Image, Video, or Audio";
+                    }
+                    if (readonlyNotice) readonlyNotice.style.display = 'none';
+                } else {
+                    if (input) {
+                        input.value = '';
+                        input.disabled = true;
+                        input.placeholder = "🔒 Only platform administrators can speak in # announcements";
+                    }
+                    if (sendBtn) {
+                        sendBtn.disabled = true;
+                        sendBtn.classList.add('disabled');
+                    }
+                    if (attachBtn) {
+                        attachBtn.disabled = true;
+                        attachBtn.classList.add('disabled');
+                        attachBtn.title = "Announcements channel is restricted to administrators";
+                    }
+                    if (readonlyNotice) readonlyNotice.style.display = 'flex';
+                    cancelPendingAttachment();
+                }
+            } else {
+                if (statusPill) statusPill.style.display = 'none';
+                if (readonlyNotice) readonlyNotice.style.display = 'none';
+
+                if (input) {
+                    input.disabled = false;
+                    if (currentDmUser) {
+                        input.placeholder = `Message @${currentDmUser}...`;
+                    } else {
+                        input.placeholder = "Type a message or /help, /vc, /dm...";
+                    }
+                }
+                if (sendBtn) {
+                    sendBtn.disabled = false;
+                    sendBtn.classList.remove('disabled');
+                }
+                if (attachBtn) {
+                    attachBtn.disabled = false;
+                    attachBtn.classList.remove('disabled');
+                    attachBtn.title = "Upload Image, Video, or Audio";
+                }
+            }
+        }
+
+        function triggerFileUpload() {
+            if (currentChannel === 'announcements' && !isDeviceAdmin()) {
+                appendSystemNotice('❌ Permission Denied: Only administrators can post attachments in # announcements.');
+                return;
+            }
+            const fileInput = document.getElementById('mediaFileInput');
+            if (fileInput) fileInput.click();
         }
 
         // Initialize Chat
@@ -1530,6 +1706,9 @@
                                 appendMessage(msg, true);
                             }
                         } else if (msg.channel === currentChannel) {
+                            if (currentChannel === 'announcements' && !isMsgFromAdmin(msg)) {
+                                return;
+                            }
                             saveMessageToStorage(msg.channel, msg);
                             appendMessage(msg, true);
                         }
@@ -1582,6 +1761,7 @@
                 document.getElementById('usernameModalOverlay').style.display = 'none';
                 showUserBadge(currentUser);
                 connectInboxSocket(currentUser);
+                updateChatInputPermissions();
                 if (currentChannel) {
                     renderChannelMessages(currentChannel);
                 }
@@ -1656,6 +1836,11 @@
                                         appendMessage(msgObj, true);
                                     }
                                 } else {
+                                    if (currentChannel === 'announcements' || msgObj.channel === 'announcements') {
+                                        if (!isMsgFromAdmin(msgObj)) {
+                                            return;
+                                        }
+                                    }
                                     saveMessageToStorage(currentChannel, msgObj);
                                     if (currentChannel && !currentDmUser) {
                                         appendMessage(msgObj, true);
@@ -1710,6 +1895,11 @@
                                         addedAny = true;
                                     }
                                 } else {
+                                    if (currentChannel === 'announcements' || payload.channel === 'announcements') {
+                                        if (!isMsgFromAdmin(payload)) {
+                                            continue;
+                                        }
+                                    }
                                     saveMessageToStorage(currentChannel, payload);
                                     if (currentChannel && !currentDmUser) {
                                         appendMessage(payload, false);
@@ -1944,6 +2134,8 @@
             document.getElementById('currentChannelTitle').textContent = `🔒 @ ${targetUser}`;
             document.getElementById('currentChannelDesc').textContent = 'Private End-to-End Relayed Direct Message';
 
+            updateChatInputPermissions();
+
             const dmTopic = getDmTopic(currentUser, targetUser);
             renderDmMessages(dmTopic);
             connectChannelSocket(dmTopic);
@@ -1967,6 +2159,8 @@
             const data = CHANNEL_DATA[channelName] || CHANNEL_DATA['general'];
             document.getElementById('currentChannelTitle').textContent = data.title;
             document.getElementById('currentChannelDesc').textContent = data.desc;
+
+            updateChatInputPermissions();
 
             const topic = getTopicName(channelName);
             renderChannelMessages(channelName);
@@ -2191,6 +2385,11 @@
 
         /* File & Media Uploading (Images, Videos, Audio) */
         async function handleFileSelected(event) {
+            if (currentChannel === 'announcements' && !isDeviceAdmin()) {
+                appendSystemNotice('❌ Permission Denied: Only administrators can post attachments in # announcements.');
+                event.target.value = '';
+                return;
+            }
             const file = event.target.files && event.target.files[0];
             if (!file) return;
             await uploadMediaFile(file);
@@ -2201,6 +2400,10 @@
             window.addEventListener('dragover', e => e.preventDefault());
             window.addEventListener('drop', async e => {
                 e.preventDefault();
+                if (currentChannel === 'announcements' && !isDeviceAdmin()) {
+                    appendSystemNotice('❌ Permission Denied: Only administrators can post attachments in # announcements.');
+                    return;
+                }
                 if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
                     await uploadMediaFile(e.dataTransfer.files[0]);
                 }
@@ -2208,6 +2411,9 @@
 
             // Clipboard Paste (e.g. screenshot or media file)
             window.addEventListener('paste', async e => {
+                if (currentChannel === 'announcements' && !isDeviceAdmin()) {
+                    return;
+                }
                 if (e.clipboardData && e.clipboardData.files && e.clipboardData.files.length > 0) {
                     const file = e.clipboardData.files[0];
                     if (file.type.startsWith('image/') || file.type.startsWith('video/') || file.type.startsWith('audio/')) {
@@ -2320,6 +2526,11 @@
         }
 
         async function uploadMediaFile(file) {
+            if (currentChannel === 'announcements' && !isDeviceAdmin()) {
+                appendSystemNotice('❌ Permission Denied: Only platform administrators can post attachments in # announcements.');
+                return;
+            }
+
             const previewBar = document.getElementById('uploadPreviewBar');
             const fileNameEl = document.getElementById('uploadFileName');
             const fileSizeEl = document.getElementById('uploadFileSize');
@@ -2536,7 +2747,10 @@
         function getStoredMessages(channel) {
             try {
                 const raw = localStorage.getItem('yusdog_chat_' + channel);
-                const msgs = raw ? JSON.parse(raw) : [];
+                let msgs = raw ? JSON.parse(raw) : [];
+                if (channel === 'announcements') {
+                    msgs = msgs.filter(m => isMsgFromAdmin(m));
+                }
                 msgs.forEach(m => { if (m && m.id) seenMessageIds.add(m.id); });
                 return msgs;
             } catch (e) {
@@ -2582,13 +2796,23 @@
 
             const msgs = getStoredMessages(channel);
             if (msgs.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align: center; color: #52525b; padding: 48px 20px; font-size: 14px;">
-                        <div style="font-size: 32px; margin-bottom: 8px;">💬</div>
-                        <div style="font-weight: 600; color: #71717a;">No messages here yet</div>
-                        <div style="font-size: 12px; color: #3f3f46; margin-top: 4px;">Type below or use commands like /help, /vc, or attach images!</div>
-                    </div>
-                `;
+                if (channel === 'announcements') {
+                    container.innerHTML = `
+                        <div style="text-align: center; color: #52525b; padding: 48px 20px; font-size: 14px;">
+                            <div style="font-size: 32px; margin-bottom: 8px;">📢</div>
+                            <div style="font-weight: 600; color: #71717a;">No announcements yet</div>
+                            <div style="font-size: 12px; color: #3f3f46; margin-top: 4px;">Only platform administrators can post updates and news in this channel.</div>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <div style="text-align: center; color: #52525b; padding: 48px 20px; font-size: 14px;">
+                            <div style="font-size: 32px; margin-bottom: 8px;">💬</div>
+                            <div style="font-weight: 600; color: #71717a;">No messages here yet</div>
+                            <div style="font-size: 12px; color: #3f3f46; margin-top: 4px;">Type below or use commands like /help, /vc, or attach images!</div>
+                        </div>
+                    `;
+                }
                 return;
             }
             msgs.forEach(msg => appendMessage(msg, false));
@@ -2702,6 +2926,14 @@
             const msgId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
             const isMeAdmin = isDeviceAdmin();
 
+            // Strict enforcement: Only admins can post or speak in announcements
+            if (currentChannel === 'announcements' && !isMeAdmin) {
+                appendSystemNotice('❌ Permission Denied: Only platform administrators can speak in # announcements.');
+                input.value = '';
+                cancelPendingAttachment();
+                return;
+            }
+
             const newMsg = {
                 id: msgId,
                 user: currentUser,
@@ -2709,6 +2941,8 @@
                 text: text,
                 attachment: pendingAttachment ? { ...pendingAttachment } : null,
                 isAdmin: isMeAdmin,
+                adminDevice: isMeAdmin ? (window.YusdogSecurity ? window.YusdogSecurity.DEVICE_ID : null) : null,
+                channel: currentChannel,
                 isDm: Boolean(currentDmUser),
                 to: currentDmUser || null,
                 timestamp: Date.now()
