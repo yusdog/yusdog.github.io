@@ -567,7 +567,7 @@
                 </div>
                 <div class="online-pill">
                     <span class="online-dot"></span>
-                    <span id="onlineCount">14 Online</span>
+                    <span id="onlineCount">Connected</span>
                 </div>
             </div>
 
@@ -593,34 +593,22 @@
             'general': {
                 title: '💬 # general',
                 desc: 'Main community discussion. Be respectful.',
-                defaultMsgs: [
-                    { user: 'yusdog', time: '10:00 AM', text: 'Welcome to Yusdog Chat! Unblocked and ad-free.' },
-                    { user: 'Alex', time: '10:02 AM', text: 'Yo this dark theme is clean 🔥' },
-                    { user: 'RetroGamer', time: '10:05 AM', text: 'Slope and Wordle work at school with zero lag!' }
-                ]
+                defaultMsgs: []
             },
             'game-requests': {
                 title: '🎮 # game-requests',
                 desc: 'Request games or seasons to be added to Yusdog.',
-                defaultMsgs: [
-                    { user: 'yusdog', time: 'Yesterday', text: 'Drop game requests here, I review them weekly.' },
-                    { user: 'Sammy', time: '11:15 AM', text: 'Can you add Mario 64 speedrun?' }
-                ]
+                defaultMsgs: []
             },
             'movie-chat': {
                 title: '🎬 # movie-chat',
                 desc: 'Chat about movies and requested shows.',
-                defaultMsgs: [
-                    { user: 'yusdog', time: 'Yesterday', text: 'South Park S5 E4, E5, and E6 are uploaded in /movies/!' },
-                    { user: 'CartmanFan', time: '1:20 PM', text: 'Scott Tenorman Must Die is legendary 😭' }
-                ]
+                defaultMsgs: []
             },
             'announcements': {
                 title: '📢 # announcements',
                 desc: 'Official platform news and updates.',
-                defaultMsgs: [
-                    { user: 'yusdog', time: 'Today', text: 'Security update: Username permanent locking and hardware ban enforcement active.' }
-                ]
+                defaultMsgs: []
             }
         };
 
@@ -631,6 +619,14 @@
             if (devIdEl && window.YusdogSecurity) {
                 devIdEl.textContent = window.YusdogSecurity.DEVICE_ID;
             }
+
+            // Clear any old fake messages that were previously cached in localStorage
+            ['general', 'game-requests', 'movie-chat', 'announcements'].forEach(ch => {
+                const raw = localStorage.getItem('yusdog_chat_' + ch);
+                if (raw && (raw.includes('Welcome to Yusdog Chat!') || raw.includes('Scott Tenorman Must Die is legendary') || raw.includes('Slope and Wordle work'))) {
+                    localStorage.removeItem('yusdog_chat_' + ch);
+                }
+            });
 
             // Check if device is banned
             if (window.YusdogSecurity && await window.YusdogSecurity.isDeviceBanned()) {
@@ -692,14 +688,6 @@
                 currentUser = await window.YusdogSecurity.registerLockedUsername(name);
                 document.getElementById('usernameModalOverlay').style.display = 'none';
                 showUserBadge(currentUser);
-
-                // Post system welcome message
-                saveMessage(currentChannel, {
-                    user: 'System',
-                    time: getCurrentTime(),
-                    text: `${currentUser} has registered their permanent device identity.`,
-                    isSystem: true
-                });
                 renderChannelMessages(currentChannel);
             } catch (err) {
                 if (err.message === 'DEVICE_BANNED') {
@@ -750,7 +738,7 @@
         }
 
         function saveMessage(channel, msgObj) {
-            let msgs = getStoredMessages(channel) || [...(CHANNEL_DATA[channel]?.defaultMsgs || [])];
+            let msgs = getStoredMessages(channel) || [];
             msgs.push(msgObj);
             // Keep last 100 messages
             if (msgs.length > 100) msgs = msgs.slice(-100);
@@ -769,7 +757,17 @@
             if (!container) return;
             container.innerHTML = '';
 
-            const msgs = getStoredMessages(channel) || (CHANNEL_DATA[channel]?.defaultMsgs || []);
+            const msgs = getStoredMessages(channel) || [];
+            if (msgs.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: #52525b; padding: 48px 20px; font-size: 14px;">
+                        <div style="font-size: 32px; margin-bottom: 8px;">💬</div>
+                        <div style="font-weight: 600; color: #71717a;">No messages here yet</div>
+                        <div style="font-size: 12px; color: #3f3f46; margin-top: 4px;">Type below to start the conversation!</div>
+                    </div>
+                `;
+                return;
+            }
             msgs.forEach(msg => appendMessage(msg, false));
             container.scrollTop = container.scrollHeight;
         }
@@ -777,6 +775,11 @@
         function appendMessage(msg, scroll = true) {
             const container = document.getElementById('messagesContainer');
             if (!container) return;
+
+            const emptyNotice = container.querySelector('div[style*="text-align: center"]');
+            if (emptyNotice) {
+                container.innerHTML = '';
+            }
 
             const isMe = currentUser && msg.user.toLowerCase() === currentUser.toLowerCase();
             const initial = (msg.user || '?').charAt(0).toUpperCase();
