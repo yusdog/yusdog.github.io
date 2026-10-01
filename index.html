@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="images/favicon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon.png">
+    <link rel="apple-touch-icon" href="images/favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>yusdog</title>
+    <meta name="title" content="yusdog">
+    <meta name="description" content="Play unblocked games like Crazy Cattle 3D and DriveMad on yusdog. Fast, free, no downloads—perfect for school or home.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yusdog.github.io/">
+    <meta property="og:title" content="yusdog">
+    <meta property="og:description" content="Play unblocked games like Crazy Cattle 3D and DriveMad on yusdog. Fast, free, no downloads—perfect for school or home.">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://yusdog.github.io/">
+    <meta name="twitter:title" content="yusdog">
+    <meta name="twitter:description" content="Play unblocked games like Crazy Cattle 3D and DriveMad on yusdog. Fast, free, no downloads—perfect for school or home.">
+    <meta name="keywords" content="unblocked games, games for school, browser games, chromebook games, no download games, html5 games, free unblocked games, yusdog, fun games at school, crazy cattle 3d, play crazy cattle 3d, crazy cattle 3d unblocked, crazy cattle, crazy cattle unblocked, play crazy cattle, crazy cattle online, crazy cattle 3d online">
+    <link rel="stylesheet" href="styles/style.css">
+    <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-WX5VS54ZDW"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+        gtag('config', 'G-WX5VS54ZDW');
+    </script>
+</head>
+<body class="dark-mode">
+    <!-- Key Gate -->
+    <div id="keyGateOverlay">
+        <div class="key-card">
+            <h2 class="key-title">yusdog</h2>
+            <p class="key-subtitle">Enter access key to continue</p>
+            <form onsubmit="submitKey(event)">
+                <input type="password" id="keyInput" class="key-input" placeholder="Enter key..." autocomplete="off" autofocus>
+                <button type="submit" class="key-button">Unlock</button>
+                <div id="keyError" class="key-error"></div>
+            </form>
+        </div>
+    </div>
+    <script>
+        if (localStorage.getItem('yusdog_key_unlocked') !== 'true') {
+            document.getElementById('keyGateOverlay').style.display = 'flex';
+        }
+    </script>
+    <header>
+        <div class="header-content">
+            <a class="logo" href="/" style="text-decoration: none; color: inherit;">yusdog</a>
+            <div class="search-container">
+                <input type="text" id="searchBar" placeholder="Search zones..." oninput="filterZones()">
+                <select id="sortOptions" onchange="sortZones()">
+                    <option value="name">Name</option>
+                    <option value="id">ID (Date)</option>
+                    <option value="popular">Popular</option>
+                </select>
+            </div>
+            <div class="control-buttons">
+                <a href="https://yusdog.github.io/movies/" id="moviesTab" class="nav-tab">movies</a>
+                <button id="settings">Settings</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <details id="featuredZonesWrapper" open>
+            <summary id="allZonesSummary" style="font-size: 1.2rem; font-weight: bold; cursor: pointer;">Featured Zones</summary>
+            <div id="featuredZones" class="zone-container"></div>
+        </details>
+        <br><hr><br>
+        <details id="allZonesWrapper" open>
+            <summary id="allSummary" style="font-size: 1.2rem; font-weight: bold; cursor: pointer;">All Zones</summary>
+            <div id="container">Loading...</div>
+        </details>
+    </main>
+
+    <!-- Notice Popup -->
+    <div id="noticeOverlay" class="notice-overlay">
+        <div class="notice-modal">
+            <div class="notice-header">
+                <h3>Notice</h3>
+                <button id="closeNoticeX" onclick="closeNotice()" aria-label="Close">×</button>
+            </div>
+            <div class="notice-body">
+                <p>I DID NOT MAKE THIS SITE, I ONLY NAMED IT AND UNBLOCKED IT. I REMOVED THE ADS AND ADDED A DARKER THEME. ALL LOVE GOES TO THE ORIGINAL CREATOR!</p>
+            </div>
+            <div class="notice-footer">
+                <button id="closeNoticeBtn" onclick="closeNotice()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="popupOverlay">
+        <div class="popup">
+            <div class="popup-header">
+                <h3 id="popupTitle">Title</h3>
+                <button id="popupClose" onclick="closePopup()">×</button>
+            </div>
+            <div id="popupBody">
+                Content will be here
+            </div>
+        </div>
+    </div>
+    <footer>
+        <div class="footer-links">
+            <a href="#" onclick="showNotice(); return false;">Notice</a>
+            <a href="#" onclick="showContact(); return false;">Contact</a>
+            <a href="#" onclick="loadPrivacy(); return false;">Privacy Policy</a>
+            <a href="javascript:saveData()">Export Data</a>
+            <label for="importData" style="color: var(--primary-color); cursor: pointer;">Import Data</label>
+            <input type="file" id="importData" style="display: none;" onchange="loadData(event)">
+        </div>
+    </footer>
+
+    <script src="javascript/index.js"></script>
+</body>
+</html>
