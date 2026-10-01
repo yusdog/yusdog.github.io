@@ -546,10 +546,9 @@
         <aside class="chat-sidebar">
             <div class="sidebar-header">Channels</div>
             <ul class="channels-list">
-                <li class="channel-item active" onclick="switchChannel('general')">💬 # general</li>
-                <li class="channel-item" onclick="switchChannel('game-requests')">🎮 # game-requests</li>
-                <li class="channel-item" onclick="switchChannel('movie-chat')">🎬 # movie-chat</li>
-                <li class="channel-item" onclick="switchChannel('announcements')">📢 # announcements</li>
+                <li class="channel-item active" data-channel="general" onclick="switchChannel('general')">💬 # general</li>
+                <li class="channel-item" data-channel="movie-chat" onclick="switchChannel('movie-chat')">🎬 # movie-chat</li>
+                <li class="channel-item" data-channel="announcements" onclick="switchChannel('announcements')">📢 # announcements</li>
             </ul>
             <div class="sidebar-footer">
                 <div>Device Hardware Lock:</div>
@@ -588,27 +587,29 @@
         let currentChannel = 'general';
         let currentUser = null;
         let broadcast = null;
+        let currentWs = null;
+        let reconnectTimer = null;
+        const seenMessageIds = new Set();
+
+        const NTFY_BASE = 'https://ntfy.sh';
+        const NTFY_WS_BASE = 'wss://ntfy.sh';
+
+        function getTopicName(channel) {
+            return 'yd_chat_v2_' + channel.replace(/[^a-zA-Z0-9]/g, '_');
+        }
 
         const CHANNEL_DATA = {
             'general': {
                 title: '💬 # general',
-                desc: 'Main community discussion. Be respectful.',
-                defaultMsgs: []
-            },
-            'game-requests': {
-                title: '🎮 # game-requests',
-                desc: 'Request games or seasons to be added to Yusdog.',
-                defaultMsgs: []
+                desc: 'Main community discussion. Respect all members.'
             },
             'movie-chat': {
                 title: '🎬 # movie-chat',
-                desc: 'Chat about movies and requested shows.',
-                defaultMsgs: []
+                desc: 'Chat about movies and requested shows.'
             },
             'announcements': {
                 title: '📢 # announcements',
-                desc: 'Official platform news and updates.',
-                defaultMsgs: []
+                desc: 'Official platform news and updates.'
             }
         };
 
@@ -620,13 +621,19 @@
                 devIdEl.textContent = window.YusdogSecurity.DEVICE_ID;
             }
 
-            // Clear any old fake messages that were previously cached in localStorage
+            // Clean up any legacy mock messages or obsolete channel caches
             ['general', 'game-requests', 'movie-chat', 'announcements'].forEach(ch => {
                 const raw = localStorage.getItem('yusdog_chat_' + ch);
-                if (raw && (raw.includes('Welcome to Yusdog Chat!') || raw.includes('Scott Tenorman Must Die is legendary') || raw.includes('Slope and Wordle work'))) {
+                if (raw && (raw.includes('Welcome to Yusdog Chat!') || raw.includes('Scott Tenorman Must Die') || raw.includes('Slope and Wordle'))) {
                     localStorage.removeItem('yusdog_chat_' + ch);
                 }
             });
+            localStorage.removeItem('yusdog_chat_game-requests');
+
+            // Run security engine initialization
+            if (window.YusdogSecurity && window.YusdogSecurity.initSecurity) {
+                await window.YusdogSecurity.initSecurity();
+            }
 
             // Check if device is banned
             if (window.YusdogSecurity && await window.YusdogSecurity.isDeviceBanned()) {
@@ -634,28 +641,34 @@
                 return;
             }
 
-            // Check username
+            // Check locked username
             currentUser = await window.YusdogSecurity.getLockedUsername();
             if (currentUser) {
                 showUserBadge(currentUser);
             } else {
-                // If unlocked, prompt for username
+                // If key is unlocked, prompt for username
                 if (localStorage.getItem('yusdog_key_unlocked') === 'true') {
                     showUsernameModal();
                 }
             }
 
-            // Init Broadcast Channel for live multi-tab communication
+            // Local BroadcastChannel for instant multi-tab sync
             try {
                 broadcast = new BroadcastChannel('yusdog_chat_stream');
                 broadcast.onmessage = function(e) {
                     if (e.data && e.data.channel === currentChannel) {
-                        appendMessage(e.data, false);
+                        const msg = e.data;
+                        if (msg.id && !seenMessageIds.has(msg.id)) {
+                            seenMessageIds.add(msg.id);
+                            saveMessageToStorage(msg.channel, msg);
+                            appendMessage(msg, true);
+                        }
                     }
                 };
             } catch (e) {}
 
-            renderChannelMessages(currentChannel);
+            // Activate initial channel
+            switchChannel('general');
         }
 
         function showUsernameModal() {
@@ -679,7 +692,6 @@
             error.textContent = '';
 
             try {
-                // Confirm dialog for maximum clarity
                 const confirmMsg = `WARNING: Are you 100% sure you want the username "${name}"?\n\nThis CANNOT be changed ever on this device. Inappropriate names will immediately ban this physical device.`;
                 if (!window.confirm(confirmMsg)) {
                     return;
@@ -691,7 +703,6 @@
                 renderChannelMessages(currentChannel);
             } catch (err) {
                 if (err.message === 'DEVICE_BANNED') {
-                    // Ban already handled in security.js
                     return;
                 }
                 error.textContent = err.message || 'Error registering username.';
@@ -707,10 +718,120 @@
             }
         }
 
+        function updateConnectionStatus(text, isConnected) {
+            const label = document.getElementById('onlineCount');
+            const dot = document.querySelector('.online-dot');
+            if (label) label.textContent = text;
+            if (dot) {
+                dot.style.backgroundColor = isConnected ? '#34c759' : '#ff9500';
+                dot.style.boxShadow = isConnected ? '0 0 8px rgba(52, 199, 89, 0.8)' : '0 0 8px rgba(255, 149, 0, 0.8)';
+            }
+        }
+
+        function connectChannelSocket(channel) {
+            if (currentWs) {
+                try {
+                    currentWs.onclose = null;
+                    currentWs.onerror = null;
+                    currentWs.close();
+                } catch (e) {}
+                currentWs = null;
+            }
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+                reconnectTimer = null;
+            }
+
+            updateConnectionStatus('Connecting...', false);
+
+            const topic = getTopicName(channel);
+            const wsUrl = `${NTFY_WS_BASE}/${topic}/ws`;
+
+            try {
+                const ws = new WebSocket(wsUrl);
+                currentWs = ws;
+
+                ws.onopen = function() {
+                    if (currentWs === ws) {
+                        updateConnectionStatus('Connected • Live', true);
+                    }
+                };
+
+                ws.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.event === 'message' && data.message) {
+                            const msgObj = JSON.parse(data.message);
+                            if (msgObj && msgObj.id && !seenMessageIds.has(msgObj.id)) {
+                                seenMessageIds.add(msgObj.id);
+                                saveMessageToStorage(channel, msgObj);
+                                if (channel === currentChannel) {
+                                    appendMessage(msgObj, true);
+                                }
+                            }
+                        }
+                    } catch (e) {}
+                };
+
+                ws.onerror = function() {
+                    updateConnectionStatus('Reconnecting...', false);
+                };
+
+                ws.onclose = function() {
+                    if (currentWs === ws) {
+                        updateConnectionStatus('Disconnected', false);
+                        reconnectTimer = setTimeout(() => {
+                            if (currentChannel === channel) {
+                                connectChannelSocket(channel);
+                            }
+                        }, 3000);
+                    }
+                };
+            } catch (e) {
+                updateConnectionStatus('Offline', false);
+            }
+        }
+
+        async function fetchRemoteHistory(channel) {
+            try {
+                const topic = getTopicName(channel);
+                const res = await fetch(`${NTFY_BASE}/${topic}/json?poll=1&since=24h`, {
+                    cache: 'no-store'
+                });
+                if (!res.ok) return;
+                const text = await res.text();
+                const lines = text.trim().split('\n');
+                let addedAny = false;
+                for (const line of lines) {
+                    if (!line.trim()) continue;
+                    try {
+                        const item = JSON.parse(line);
+                        if (item.event === 'message' && item.message) {
+                            const payload = JSON.parse(item.message);
+                            if (payload && payload.id && !seenMessageIds.has(payload.id)) {
+                                seenMessageIds.add(payload.id);
+                                saveMessageToStorage(channel, payload);
+                                if (channel === currentChannel) {
+                                    appendMessage(payload, false);
+                                    addedAny = true;
+                                }
+                            }
+                        }
+                    } catch (e) {}
+                }
+                if (addedAny && channel === currentChannel) {
+                    const container = document.getElementById('messagesContainer');
+                    if (container) container.scrollTop = container.scrollHeight;
+                }
+            } catch (err) {}
+        }
+
         function switchChannel(channelName) {
+            if (!CHANNEL_DATA[channelName]) channelName = 'general';
             currentChannel = channelName;
+
             document.querySelectorAll('.channel-item').forEach(el => {
-                if (el.textContent.includes(channelName)) {
+                if (el.getAttribute('data-channel') === channelName || el.textContent.includes(channelName)) {
                     el.classList.add('active');
                 } else {
                     el.classList.remove('active');
@@ -720,7 +841,10 @@
             const data = CHANNEL_DATA[channelName] || CHANNEL_DATA['general'];
             document.getElementById('currentChannelTitle').textContent = data.title;
             document.getElementById('currentChannelDesc').textContent = data.desc;
+
             renderChannelMessages(channelName);
+            connectChannelSocket(channelName);
+            fetchRemoteHistory(channelName);
         }
 
         function getCurrentTime() {
@@ -731,25 +855,24 @@
         function getStoredMessages(channel) {
             try {
                 const raw = localStorage.getItem('yusdog_chat_' + channel);
-                return raw ? JSON.parse(raw) : null;
+                const msgs = raw ? JSON.parse(raw) : [];
+                msgs.forEach(m => {
+                    if (m && m.id) seenMessageIds.add(m.id);
+                });
+                return msgs;
             } catch (e) {
-                return null;
+                return [];
             }
         }
 
-        function saveMessage(channel, msgObj) {
-            let msgs = getStoredMessages(channel) || [];
+        function saveMessageToStorage(channel, msgObj) {
+            let msgs = getStoredMessages(channel);
+            if (msgs.some(m => m.id && m.id === msgObj.id)) return;
             msgs.push(msgObj);
-            // Keep last 100 messages
             if (msgs.length > 100) msgs = msgs.slice(-100);
             try {
                 localStorage.setItem('yusdog_chat_' + channel, JSON.stringify(msgs));
             } catch (e) {}
-
-            // Broadcast to other tabs
-            if (broadcast) {
-                broadcast.postMessage({ ...msgObj, channel });
-            }
         }
 
         function renderChannelMessages(channel) {
@@ -757,13 +880,13 @@
             if (!container) return;
             container.innerHTML = '';
 
-            const msgs = getStoredMessages(channel) || [];
+            const msgs = getStoredMessages(channel);
             if (msgs.length === 0) {
                 container.innerHTML = `
                     <div style="text-align: center; color: #52525b; padding: 48px 20px; font-size: 14px;">
                         <div style="font-size: 32px; margin-bottom: 8px;">💬</div>
                         <div style="font-weight: 600; color: #71717a;">No messages here yet</div>
-                        <div style="font-size: 12px; color: #3f3f46; margin-top: 4px;">Type below to start the conversation!</div>
+                        <div style="font-size: 12px; color: #3f3f46; margin-top: 4px;">Type below to send a live message to everyone!</div>
                     </div>
                 `;
                 return;
@@ -781,7 +904,7 @@
                 container.innerHTML = '';
             }
 
-            const isMe = currentUser && msg.user.toLowerCase() === currentUser.toLowerCase();
+            const isMe = currentUser && msg.user && msg.user.toLowerCase() === currentUser.toLowerCase();
             const initial = (msg.user || '?').charAt(0).toUpperCase();
 
             const row = document.createElement('div');
@@ -816,23 +939,47 @@
             const text = input.value.trim();
             if (!text) return;
 
-            // Check if message is severely inappropriate
+            // Check if message is inappropriate
             if (window.YusdogSecurity && window.YusdogSecurity.checkUsernameInappropriate(text)) {
                 alert('WARNING: Inappropriate language detected. Further violations will result in an immediate device ban.');
                 input.value = '';
                 return;
             }
 
+            const msgId = 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
             const newMsg = {
+                id: msgId,
                 user: currentUser,
                 time: getCurrentTime(),
-                text: text
+                text: text,
+                timestamp: Date.now()
             };
 
-            saveMessage(currentChannel, newMsg);
+            // 1. Local optimistic display & storage
+            seenMessageIds.add(msgId);
+            saveMessageToStorage(currentChannel, newMsg);
             appendMessage(newMsg, true);
             input.value = '';
             input.focus();
+
+            // 2. Local tab-to-tab sync
+            if (broadcast) {
+                try {
+                    broadcast.postMessage({ ...newMsg, channel: currentChannel });
+                } catch (e) {}
+            }
+
+            // 3. Global real-time broadcast via ntfy.sh
+            const topic = getTopicName(currentChannel);
+            try {
+                fetch(`${NTFY_BASE}/${topic}`, {
+                    method: 'POST',
+                    headers: {
+                        'Title': 'Yusdog Chat'
+                    },
+                    body: JSON.stringify(newMsg)
+                }).catch(err => console.warn('Publish warning:', err));
+            } catch (e) {}
         }
 
         function escapeHtml(str) {

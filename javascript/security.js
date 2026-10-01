@@ -344,6 +344,7 @@
 
     // Get locked username for this device
     async function getLockedUsername() {
+        await enforceUsernameFreshness();
         let name = null;
         try { name = localStorage.getItem('yusdog_chat_username'); } catch (e) {}
         if (!name) {
@@ -375,15 +376,34 @@
         }
 
         // Permanently lock
-        try { localStorage.setItem('yusdog_chat_username', username); } catch (e) {}
+        try {
+            localStorage.setItem('yusdog_chat_username', username);
+            localStorage.setItem('yusdog_user_version', USERNAME_VERSION);
+        } catch (e) {}
         await setIDBValue('chat_username', username);
+        await setIDBValue('user_version', USERNAME_VERSION);
         document.cookie = `yusdog_chat_user=${encodeURIComponent(username)}; path=/; max-age=315360000; SameSite=Lax`;
         return username;
+    }
+
+    const USERNAME_VERSION = 'v2_restart';
+
+    async function enforceUsernameFreshness() {
+        try {
+            if (localStorage.getItem('yusdog_user_version') !== USERNAME_VERSION) {
+                localStorage.removeItem('yusdog_chat_username');
+                localStorage.setItem('yusdog_user_version', USERNAME_VERSION);
+                document.cookie = 'yusdog_chat_user=; path=/; max-age=0; SameSite=Lax';
+                await setIDBValue('chat_username', null);
+                await setIDBValue('user_version', USERNAME_VERSION);
+            }
+        } catch (e) {}
     }
 
     // Initialization routine
     async function initSecurity() {
         enforceKeyFreshness();
+        await enforceUsernameFreshness();
 
         const banned = await isDeviceBanned();
         if (banned) {
