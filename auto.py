@@ -168,6 +168,7 @@ TEMPLATE_HTML = """<!DOCTYPE html>
             }
         }
     </style>
+    <script src="/javascript/security.js"></script>
 </head>
 <body class="dark-mode">
     <!-- Key Gate -->
@@ -183,7 +184,7 @@ TEMPLATE_HTML = """<!DOCTYPE html>
         </div>
     </div>
     <script>
-        if (localStorage.getItem('yusdog_key_unlocked') !== 'true') {
+        if (localStorage.getItem('yusdog_key_version') !== 'v3_kittens' || localStorage.getItem('yusdog_key_unlocked') !== 'true') {
             document.getElementById('keyGateOverlay').style.display = 'flex';
         }
     </script>
@@ -191,6 +192,7 @@ TEMPLATE_HTML = """<!DOCTYPE html>
         <div class="header-content">
             <a class="logo" href="/" style="text-decoration: none; color: inherit;">yusdog</a>
             <div class="control-buttons">
+                <a href="/chat/" id="chatTab" class="nav-tab">chat</a>
                 <a href="https://yusdog.github.io/movies/" id="moviesTab" class="nav-tab">movies</a>
                 <button id="settings">Settings</button>
             </div>

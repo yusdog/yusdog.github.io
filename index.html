@@ -29,6 +29,15 @@
         gtag('js', new Date());
         gtag('config', 'G-WX5VS54ZDW');
     </script>
+    <script src="/javascript/security.js"></script>
+    <script>
+        (function(){
+            if (localStorage.getItem('yusdog_device_banned') === 'true' || document.cookie.includes('yusdog_banned=1')) {
+                document.documentElement.innerHTML = '<div style="background:#050505;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;text-align:center;padding:20px;"><div><h1 style="color:#ff3b30;font-size:2.5rem;margin-bottom:10px;">⛔ ACCESS PERMANENTLY BANNED</h1><p style="color:#a1a1aa;max-width:500px;line-height:1.6;">This device has been permanently restricted from accessing Yusdog. IP resets, cookie clearing, or incognito mode will not bypass this ban.</p></div></div>';
+                window.stop && window.stop();
+            }
+        })();
+    </script>
 </head>
 <body class="dark-mode">
     <!-- Key Gate -->
@@ -44,7 +53,7 @@
         </div>
     </div>
     <script>
-        if (localStorage.getItem('yusdog_key_unlocked') !== 'true') {
+        if (localStorage.getItem('yusdog_key_version') !== 'v3_kittens' || localStorage.getItem('yusdog_key_unlocked') !== 'true') {
             document.getElementById('keyGateOverlay').style.display = 'flex';
         }
     </script>
@@ -60,6 +69,7 @@
                 </select>
             </div>
             <div class="control-buttons">
+                <a href="/chat/" id="chatTab" class="nav-tab">chat</a>
                 <a href="https://yusdog.github.io/movies/" id="moviesTab" class="nav-tab">movies</a>
                 <button id="settings">Settings</button>
             </div>

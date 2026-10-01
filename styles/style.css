@@ -96,7 +96,7 @@ header {
     gap: 10px;
     margin: 0.5rem 0;
     flex: 1;
-    max-width: 500px;
+    max-width: 420px;
 }
 
 #searchBar {
@@ -139,8 +139,9 @@ header {
 
 .control-buttons {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .nav-tab {

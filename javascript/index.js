@@ -464,17 +464,23 @@ function closePopup() {
     document.getElementById('popupOverlay').style.display = "none";
 }
 
-const VALID_KEYS = ["willismybitch"];
+const VALID_KEYS = ["kittensarecool123"];
 
 function submitKey(e) {
     if (e) e.preventDefault();
+    if (window.YusdogSecurity && typeof window.YusdogSecurity.submitKey === 'function') {
+        window.YusdogSecurity.submitKey(e);
+        return;
+    }
     const input = document.getElementById('keyInput');
     const error = document.getElementById('keyError');
     if (!input) return;
     const value = input.value.trim().toLowerCase();
     if (VALID_KEYS.includes(value)) {
         try {
+            localStorage.setItem('yusdog_key_version', 'v3_kittens');
             localStorage.setItem('yusdog_key_unlocked', 'true');
+            localStorage.setItem('yusdog_key_v3', 'true');
         } catch (err) {
             console.error(err);
         }

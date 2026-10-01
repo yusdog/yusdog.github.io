@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yusdog Chat</title>
+    <link rel="icon" type="image/png" href="/images/favicon.png">
+    <link rel="stylesheet" href="/styles/style.css">
+    <script src="/javascript/security.js"></script>
+    <script>
+        (function(){
+            if (localStorage.getItem('yusdog_device_banned') === 'true' || document.cookie.includes('yusdog_banned=1')) {
+                document.documentElement.innerHTML = '<div style="background:#050507;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;text-align:center;padding:24px;"><div><h1 style="color:#ff3b30;font-size:2.2rem;margin-bottom:12px;">⛔ DEVICE PERMANENTLY BANNED</h1><p style="color:#a1a1aa;max-width:520px;line-height:1.6;">This device has been permanently restricted from accessing the Yusdog platform. Resetting cookies, changing your IP address, or using incognito mode will not bypass this ban.</p></div></div>';
+                window.stop && window.stop();
+            }
+        })();
+    </script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #0a0a0a;
+            color: #f4f4f5;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Header */
+        .chat-nav {
+            background-color: rgba(14, 14, 16, 0.95);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid #222225;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+        }
+        .chat-logo-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .chat-logo {
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+            text-decoration: none;
+        }
+        .chat-badge {
+            background: #1c1c20;
+            color: #a1a1aa;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid #2e2e34;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .chat-nav-links {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .chat-nav-btn {
+            background: #161618;
+            color: #d4d4d8;
+            border: 1px solid #28282c;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .chat-nav-btn:hover {
+            background: #202024;
+            color: #ffffff;
+            border-color: #44444a;
+            transform: translateY(-1px);
+        }
+        .user-tag {
+            background: #18181b;
+            border: 1px solid #27272a;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .user-tag .lock-icon {
+            font-size: 12px;
+            color: #a1a1aa;
+        }
+
+        /* Chat Layout */
+        .chat-wrapper {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            height: calc(100vh - 61px);
+        }
+
+        /* Sidebar */
+        .chat-sidebar {
+            width: 250px;
+            background: #0d0d0f;
+            border-right: 1px solid #202024;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid #1a1a1e;
+            font-size: 12px;
+            font-weight: 700;
+            color: #71717a;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .channels-list {
+            list-style: none;
+            padding: 10px 8px;
+            margin: 0;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .channel-item {
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #a1a1aa;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.15s ease;
+        }
+        .channel-item:hover {
+            background: #16161a;
+            color: #f4f4f5;
+        }
+        .channel-item.active {
+            background: #1c1c22;
+            color: #ffffff;
+            border-left: 3px solid #ffffff;
+        }
+
+        /* Device Info Widget in Sidebar */
+        .sidebar-footer {
+            padding: 14px;
+            border-top: 1px solid #1a1a1e;
+            font-size: 11px;
+            color: #71717a;
+            background: #09090b;
+        }
+        .device-badge {
+            font-family: monospace;
+            background: #121215;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #222226;
+            margin-top: 4px;
+            color: #a1a1aa;
+            word-break: break-all;
+        }
+
+        /* Main Chat Area */
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #0a0a0a;
+            overflow: hidden;
+        }
+        .chat-channel-bar {
+            padding: 14px 20px;
+            border-bottom: 1px solid #202024;
+            background: #0d0d0f;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .channel-info h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .channel-info p {
+            margin: 2px 0 0 0;
+            font-size: 12px;
+            color: #8e8e93;
+        }
+        .online-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #34c759;
+            background: rgba(52, 199, 89, 0.1);
+            padding: 4px 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(52, 199, 89, 0.2);
+        }
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #34c759;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 8px rgba(52, 199, 89, 0.8);
+        }
+
+        /* Messages stream */
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            scroll-behavior: smooth;
+        }
+        .msg-row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            animation: fadeInMsg 0.18s ease-out;
+        }
+        @keyframes fadeInMsg {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .msg-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: #1c1c20;
+            border: 1px solid #2e2e34;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            color: #ffffff;
+            flex-shrink: 0;
+        }
+        .msg-content {
+            flex: 1;
+            max-width: 800px;
+        }
+        .msg-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        .msg-username {
+            font-weight: 700;
+            font-size: 14px;
+            color: #ffffff;
+        }
+        .msg-username.is-me {
+            color: #ffffff;
+            text-decoration: underline;
+        }
+        .msg-time {
+            font-size: 11px;
+            color: #71717a;
+        }
+        .msg-body {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #d4d4d8;
+            background: #121215;
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 1px solid #202024;
+            display: inline-block;
+            word-break: break-word;
+        }
+        .msg-system .msg-body {
+            background: #1a1618;
+            border-color: #3d2426;
+            color: #ff9f9f;
+            font-style: italic;
+        }
+
+        /* Input Form */
+        .chat-input-bar {
+            padding: 16px 20px;
+            background: #0d0d0f;
+            border-top: 1px solid #202024;
+        }
+        .input-form {
+            display: flex;
+            gap: 10px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .chat-input {
+            flex: 1;
+            padding: 12px 18px;
+            background-color: #141417;
+            border: 1px solid #28282e;
+            border-radius: 10px;
+            color: #ffffff;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        .chat-input:focus {
+            border-color: #4f4f58;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
+            background-color: #16161b;
+        }
+        .send-btn {
+            background-color: #ffffff;
+            color: #0a0a0a;
+            border: none;
+            border-radius: 10px;
+            padding: 0 22px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .send-btn:hover {
+            background-color: #e4e4e7;
+            transform: translateY(-1px);
+        }
+
+        /* Username Modal */
+        #usernameModalOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(5, 5, 8, 0.94);
+            backdrop-filter: blur(12px);
+            z-index: 99999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .user-modal-card {
+            background: #111114;
+            border: 1px solid #28282e;
+            border-radius: 16px;
+            padding: 36px 30px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.95);
+            text-align: left;
+            animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.94); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .warning-box {
+            background: rgba(255, 59, 48, 0.1);
+            border: 1px solid rgba(255, 59, 48, 0.3);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin: 16px 0 20px 0;
+        }
+        .warning-box h4 {
+            color: #ff453a;
+            margin: 0 0 6px 0;
+            font-size: 14px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .warning-box ul {
+            margin: 0;
+            padding-left: 18px;
+            color: #d1d1d6;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .warning-box li {
+            margin-bottom: 4px;
+        }
+        .warning-box strong {
+            color: #ffffff;
+        }
+        .user-input {
+            width: 100%;
+            padding: 13px 16px;
+            border-radius: 8px;
+            border: 1px solid #323238;
+            background-color: #141418;
+            color: #ffffff;
+            font-size: 15px;
+            outline: none;
+            margin-bottom: 14px;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+        }
+        .user-input:focus {
+            border-color: #555560;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
+        }
+        .checkbox-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #a1a1aa;
+            line-height: 1.4;
+        }
+        .checkbox-row input {
+            margin-top: 2px;
+            cursor: pointer;
+        }
+        .create-user-btn {
+            width: 100%;
+            padding: 13px;
+            background: #ffffff;
+            color: #0a0a0a;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .create-user-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+        .create-user-btn:not(:disabled):hover {
+            background: #e4e4e7;
+            transform: translateY(-1px);
+        }
+        .user-error-msg {
+            color: #ff453a;
+            font-size: 13px;
+            margin-top: 10px;
+            min-height: 18px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Key Gate Overlay -->
+    <div id="keyGateOverlay">
+        <div class="key-card">
+            <h2 class="key-title">yusdog</h2>
+            <p class="key-subtitle">Enter access key to continue</p>
+            <form onsubmit="submitKey(event)">
+                <input type="password" id="keyInput" class="key-input" placeholder="Enter key..." autocomplete="off" autofocus>
+                <button type="submit" class="key-button">Unlock</button>
+                <div id="keyError" class="key-error"></div>
+            </form>
+        </div>
+    </div>
+    <script>
+        if (localStorage.getItem('yusdog_key_version') !== 'v3_kittens' || localStorage.getItem('yusdog_key_unlocked') !== 'true') {
+            document.getElementById('keyGateOverlay').style.display = 'flex';
+        }
+    </script>
+
+    <!-- Permanent Username Creation Modal -->
+    <div id="usernameModalOverlay">
+        <div class="user-modal-card">
+            <h2 style="margin: 0 0 6px 0; font-size: 22px; font-weight: 800; color: #ffffff;">Create Permanent Username</h2>
+            <p style="margin: 0; color: #8e8e93; font-size: 14px;">Choose your permanent identity on Yusdog Chat.</p>
+
+            <div class="warning-box">
+                <h4>⚠️ CRITICAL PLATFORM WARNING</h4>
+                <ul>
+                    <li>Once registered, your username <strong>CANNOT BE CHANGED</strong> under any circumstances.</li>
+                    <li><strong>Inappropriate, offensive, toxic, or slur usernames will trigger an INSTANT PERMANENT BAN</strong> of this device across all of Yusdog (Games, Movies, and Chat).</li>
+                    <li>This ban is bound to your physical device. <strong>Changing IP address, resetting cookies, or clearing cache will NOT lift the ban.</strong></li>
+                </ul>
+            </div>
+
+            <form id="usernameForm" onsubmit="handleUsernameSubmit(event)">
+                <label style="display: block; font-size: 13px; font-weight: 700; color: #d4d4d8; margin-bottom: 6px;">Choose Username (3–20 characters):</label>
+                <input type="text" id="usernameInput" class="user-input" placeholder="e.g. ShadowRider" autocomplete="off" maxlength="20" required>
+
+                <div class="checkbox-row">
+                    <input type="checkbox" id="warningAck" onchange="toggleSubmitBtn()">
+                    <label for="warningAck">I understand that this username is <strong>permanent</strong>, cannot be changed, and that inappropriate names result in an <strong>irreversible device ban</strong>.</label>
+                </div>
+
+                <button type="submit" id="submitUserBtn" class="create-user-btn" disabled>Create Username & Join Chat</button>
+                <div id="usernameError" class="user-error-msg"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Navigation Header -->
+    <header class="chat-nav">
+        <div class="chat-logo-group">
+            <a href="/" class="chat-logo">yusdog</a>
+            <span class="chat-badge">Chat</span>
+        </div>
+        <div class="chat-nav-links">
+            <div id="userBadge" class="user-tag" style="display: none;">
+                <span>👤</span>
+                <span id="displayUsername">...</span>
+                <span class="lock-icon" title="Username is locked to this device">🔒</span>
+            </div>
+            <a href="/" class="chat-nav-btn">← Games</a>
+            <a href="https://yusdog.github.io/movies/" class="chat-nav-btn">🍿 Movies</a>
+            <button onclick="lockSite()" class="chat-nav-btn" style="background: #201012; border-color: #4a1e22; color: #ff7575;">Lock Site</button>
+        </div>
+    </header>
+
+    <!-- Main Chat Workspace -->
+    <div class="chat-wrapper">
+        <!-- Sidebar -->
+        <aside class="chat-sidebar">
+            <div class="sidebar-header">Channels</div>
+            <ul class="channels-list">
+                <li class="channel-item active" onclick="switchChannel('general')">💬 # general</li>
+                <li class="channel-item" onclick="switchChannel('game-requests')">🎮 # game-requests</li>
+                <li class="channel-item" onclick="switchChannel('movie-chat')">🎬 # movie-chat</li>
+                <li class="channel-item" onclick="switchChannel('announcements')">📢 # announcements</li>
+            </ul>
+            <div class="sidebar-footer">
+                <div>Device Hardware Lock:</div>
+                <div id="deviceSignature" class="device-badge">Detecting...</div>
+                <div style="margin-top: 6px; color: #52525b;">Status: Verified</div>
+            </div>
+        </aside>
+
+        <!-- Chat Area -->
+        <main class="chat-main">
+            <div class="chat-channel-bar">
+                <div class="channel-info">
+                    <h2 id="currentChannelTitle">💬 # general</h2>
+                    <p id="currentChannelDesc">Main community discussion. Respect all members.</p>
+                </div>
+                <div class="online-pill">
+                    <span class="online-dot"></span>
+                    <span id="onlineCount">14 Online</span>
+                </div>
+            </div>
+
+            <!-- Messages Stream -->
+            <div id="messagesContainer" class="messages-container"></div>
+
+            <!-- Message Input Bar -->
+            <div class="chat-input-bar">
+                <form class="input-form" onsubmit="handleSendMessage(event)">
+                    <input type="text" id="chatMessageInput" class="chat-input" placeholder="Type a message..." autocomplete="off">
+                    <button type="submit" class="send-btn">Send</button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let currentChannel = 'general';
+        let currentUser = null;
+        let broadcast = null;
+
+        const CHANNEL_DATA = {
+            'general': {
+                title: '💬 # general',
+                desc: 'Main community discussion. Be respectful.',
+                defaultMsgs: [
+                    { user: 'yusdog', time: '10:00 AM', text: 'Welcome to Yusdog Chat! Unblocked and ad-free.' },
+                    { user: 'Alex', time: '10:02 AM', text: 'Yo this dark theme is clean 🔥' },
+                    { user: 'RetroGamer', time: '10:05 AM', text: 'Slope and Wordle work at school with zero lag!' }
+                ]
+            },
+            'game-requests': {
+                title: '🎮 # game-requests',
+                desc: 'Request games or seasons to be added to Yusdog.',
+                defaultMsgs: [
+                    { user: 'yusdog', time: 'Yesterday', text: 'Drop game requests here, I review them weekly.' },
+                    { user: 'Sammy', time: '11:15 AM', text: 'Can you add Mario 64 speedrun?' }
+                ]
+            },
+            'movie-chat': {
+                title: '🎬 # movie-chat',
+                desc: 'Chat about movies and requested shows.',
+                defaultMsgs: [
+                    { user: 'yusdog', time: 'Yesterday', text: 'South Park S5 E4, E5, and E6 are uploaded in /movies/!' },
+                    { user: 'CartmanFan', time: '1:20 PM', text: 'Scott Tenorman Must Die is legendary 😭' }
+                ]
+            },
+            'announcements': {
+                title: '📢 # announcements',
+                desc: 'Official platform news and updates.',
+                defaultMsgs: [
+                    { user: 'yusdog', time: 'Today', text: 'Security update: Username permanent locking and hardware ban enforcement active.' }
+                ]
+            }
+        };
+
+        // Initialize Chat
+        async function initChat() {
+            // Display device signature
+            const devIdEl = document.getElementById('deviceSignature');
+            if (devIdEl && window.YusdogSecurity) {
+                devIdEl.textContent = window.YusdogSecurity.DEVICE_ID;
+            }
+
+            // Check if device is banned
+            if (window.YusdogSecurity && await window.YusdogSecurity.isDeviceBanned()) {
+                window.YusdogSecurity.showBanScreen();
+                return;
+            }
+
+            // Check username
+            currentUser = await window.YusdogSecurity.getLockedUsername();
+            if (currentUser) {
+                showUserBadge(currentUser);
+            } else {
+                // If unlocked, prompt for username
+                if (localStorage.getItem('yusdog_key_unlocked') === 'true') {
+                    showUsernameModal();
+                }
+            }
+
+            // Init Broadcast Channel for live multi-tab communication
+            try {
+                broadcast = new BroadcastChannel('yusdog_chat_stream');
+                broadcast.onmessage = function(e) {
+                    if (e.data && e.data.channel === currentChannel) {
+                        appendMessage(e.data, false);
+                    }
+                };
+            } catch (e) {}
+
+            renderChannelMessages(currentChannel);
+        }
+
+        function showUsernameModal() {
+            document.getElementById('usernameModalOverlay').style.display = 'flex';
+            const input = document.getElementById('usernameInput');
+            if (input) input.focus();
+        }
+
+        function toggleSubmitBtn() {
+            const checked = document.getElementById('warningAck').checked;
+            document.getElementById('submitUserBtn').disabled = !checked;
+        }
+
+        async function handleUsernameSubmit(e) {
+            e.preventDefault();
+            const input = document.getElementById('usernameInput');
+            const error = document.getElementById('usernameError');
+            if (!input) return;
+
+            const name = input.value.trim();
+            error.textContent = '';
+
+            try {
+                // Confirm dialog for maximum clarity
+                const confirmMsg = `WARNING: Are you 100% sure you want the username "${name}"?\n\nThis CANNOT be changed ever on this device. Inappropriate names will immediately ban this physical device.`;
+                if (!window.confirm(confirmMsg)) {
+                    return;
+                }
+
+                currentUser = await window.YusdogSecurity.registerLockedUsername(name);
+                document.getElementById('usernameModalOverlay').style.display = 'none';
+                showUserBadge(currentUser);
+
+                // Post system welcome message
+                saveMessage(currentChannel, {
+                    user: 'System',
+                    time: getCurrentTime(),
+                    text: `${currentUser} has registered their permanent device identity.`,
+                    isSystem: true
+                });
+                renderChannelMessages(currentChannel);
+            } catch (err) {
+                if (err.message === 'DEVICE_BANNED') {
+                    // Ban already handled in security.js
+                    return;
+                }
+                error.textContent = err.message || 'Error registering username.';
+            }
+        }
+
+        function showUserBadge(username) {
+            const badge = document.getElementById('userBadge');
+            const nameEl = document.getElementById('displayUsername');
+            if (badge && nameEl) {
+                nameEl.textContent = username;
+                badge.style.display = 'inline-flex';
+            }
+        }
+
+        function switchChannel(channelName) {
+            currentChannel = channelName;
+            document.querySelectorAll('.channel-item').forEach(el => {
+                if (el.textContent.includes(channelName)) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+
+            const data = CHANNEL_DATA[channelName] || CHANNEL_DATA['general'];
+            document.getElementById('currentChannelTitle').textContent = data.title;
+            document.getElementById('currentChannelDesc').textContent = data.desc;
+            renderChannelMessages(channelName);
+        }
+
+        function getCurrentTime() {
+            const now = new Date();
+            return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function getStoredMessages(channel) {
+            try {
+                const raw = localStorage.getItem('yusdog_chat_' + channel);
+                return raw ? JSON.parse(raw) : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function saveMessage(channel, msgObj) {
+            let msgs = getStoredMessages(channel) || [...(CHANNEL_DATA[channel]?.defaultMsgs || [])];
+            msgs.push(msgObj);
+            // Keep last 100 messages
+            if (msgs.length > 100) msgs = msgs.slice(-100);
+            try {
+                localStorage.setItem('yusdog_chat_' + channel, JSON.stringify(msgs));
+            } catch (e) {}
+
+            // Broadcast to other tabs
+            if (broadcast) {
+                broadcast.postMessage({ ...msgObj, channel });
+            }
+        }
+
+        function renderChannelMessages(channel) {
+            const container = document.getElementById('messagesContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const msgs = getStoredMessages(channel) || (CHANNEL_DATA[channel]?.defaultMsgs || []);
+            msgs.forEach(msg => appendMessage(msg, false));
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function appendMessage(msg, scroll = true) {
+            const container = document.getElementById('messagesContainer');
+            if (!container) return;
+
+            const isMe = currentUser && msg.user.toLowerCase() === currentUser.toLowerCase();
+            const initial = (msg.user || '?').charAt(0).toUpperCase();
+
+            const row = document.createElement('div');
+            row.className = 'msg-row' + (msg.isSystem ? ' msg-system' : '');
+
+            row.innerHTML = `
+                <div class="msg-avatar">${initial}</div>
+                <div class="msg-content">
+                    <div class="msg-header">
+                        <span class="msg-username ${isMe ? 'is-me' : ''}">${escapeHtml(msg.user)}</span>
+                        <span class="msg-time">${escapeHtml(msg.time)}</span>
+                    </div>
+                    <div class="msg-body">${escapeHtml(msg.text)}</div>
+                </div>
+            `;
+
+            container.appendChild(row);
+            if (scroll) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+
+        async function handleSendMessage(e) {
+            e.preventDefault();
+            if (!currentUser) {
+                showUsernameModal();
+                return;
+            }
+
+            const input = document.getElementById('chatMessageInput');
+            if (!input) return;
+            const text = input.value.trim();
+            if (!text) return;
+
+            // Check if message is severely inappropriate
+            if (window.YusdogSecurity && window.YusdogSecurity.checkUsernameInappropriate(text)) {
+                alert('WARNING: Inappropriate language detected. Further violations will result in an immediate device ban.');
+                input.value = '';
+                return;
+            }
+
+            const newMsg = {
+                user: currentUser,
+                time: getCurrentTime(),
+                text: text
+            };
+
+            saveMessage(currentChannel, newMsg);
+            appendMessage(newMsg, true);
+            input.value = '';
+            input.focus();
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, function(m) {
+                switch (m) {
+                    case '&': return '&amp;';
+                    case '<': return '&lt;';
+                    case '>': return '&gt;';
+                    case '"': return '&quot;';
+                    case "'": return '&#039;';
+                    default: return m;
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', initChat);
+    </script>
+</body>
+</html>

@@ -220,22 +220,29 @@
             </form>
         </div>
     </div>
+    <script src="/javascript/security.js"></script>
     <script>
-        if (localStorage.getItem('yusdog_key_unlocked') !== 'true') {
+        if (localStorage.getItem('yusdog_key_version') !== 'v3_kittens' || localStorage.getItem('yusdog_key_unlocked') !== 'true') {
             document.getElementById('keyGateOverlay').style.display = 'flex';
         }
         
-        const VALID_KEYS = ["willismybitch"];
+        const VALID_KEYS = ["kittensarecool123"];
 
         function submitKey(e) {
             if (e) e.preventDefault();
+            if (window.YusdogSecurity && typeof window.YusdogSecurity.submitKey === 'function') {
+                window.YusdogSecurity.submitKey(e);
+                return;
+            }
             const input = document.getElementById('keyInput');
             const error = document.getElementById('keyError');
             if (!input) return;
             const value = input.value.trim().toLowerCase();
             if (VALID_KEYS.includes(value)) {
                 try {
+                    localStorage.setItem('yusdog_key_version', 'v3_kittens');
                     localStorage.setItem('yusdog_key_unlocked', 'true');
+                    localStorage.setItem('yusdog_key_v3', 'true');
                 } catch (err) {
                     console.error(err);
                 }
@@ -255,7 +262,10 @@
     </script>
 
     <div class="container">
-        <a href="/" class="back-link">← Back to Games</a>
+        <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 24px;">
+            <a href="/" class="back-link">← Games</a>
+            <a href="/chat/" class="back-link">💬 Chat</a>
+        </div>
 
         <h1>yusdog made this lol</h1>
         <p class="intro">i brought 5terabytes of storage for u guys lol</p>
