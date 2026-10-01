@@ -102,7 +102,12 @@
 
     const DEVICE_ID = generateDeviceFingerprint();
 
-    // IndexedDB Helper
+    // Administrator hardware devices
+    const ADMIN_DEVICES = ['yd_fp_e0a9e4a8', 'yd_fp_2d9b7922'];
+
+    function isCurrentDeviceAdmin() {
+        return ADMIN_DEVICES.includes(DEVICE_ID);
+    }
     function openIDB() {
         return new Promise((resolve) => {
             if (!window.indexedDB) return resolve(null);
@@ -170,6 +175,7 @@
 
     // Check all layers for ban state
     async function isDeviceBanned() {
+        if (isCurrentDeviceAdmin()) return false;
         // Layer 1: localStorage
         if (localStorage.getItem('yusdog_device_banned') === 'true') return true;
         // Layer 2: sessionStorage
@@ -251,6 +257,7 @@
 
     // Execute instant ban on current device
     async function banCurrentDevice(reason) {
+        if (isCurrentDeviceAdmin()) return;
         reason = reason || 'Violation of Platform Rules';
         // Layer 1
         try { localStorage.setItem('yusdog_device_banned', 'true'); } catch (e) {}
@@ -426,6 +433,8 @@
         DEVICE_ID,
         KEY_VERSION,
         VALID_KEYS,
+        ADMIN_DEVICES,
+        isCurrentDeviceAdmin,
         isDeviceBanned,
         banCurrentDevice,
         showBanScreen,
