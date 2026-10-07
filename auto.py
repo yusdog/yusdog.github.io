@@ -299,10 +299,9 @@ async def fetch_text(session: ClientSession, url: str) -> str:
 
 async def process_game(session: ClientSession, game: dict, OUTPUT_DIR: str, GAME_DIR: str) -> str:
     game_id = str(game['id'])
-    if game_id == '-1':
-        return None
-    
     game_name = game['name']
+    if game_id in ['-1', '469'] or 'sandstone' in game_name.lower():
+        return None
     game_cover = game['cover']
     pathname = f"{game['url'].split('/')[1]}"
     game_name_url = re.sub(r'[^a-zA-Z0-9-]', '', game_name.replace(' ', '-').lower()).replace('--', '-')

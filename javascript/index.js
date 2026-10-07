@@ -14,7 +14,7 @@ async function listZones() {
     try {
         const response = await fetch(zonesURL+"?t="+Date.now());
         const json = await response.json();
-        zones = json;
+        zones = json.filter(zone => zone.id !== 469 && !zone.name.toLowerCase().includes('sandstone'));
         zones[0].featured = true; // always gonna be the discord
         await fetchPopularity();
         sortZones();
